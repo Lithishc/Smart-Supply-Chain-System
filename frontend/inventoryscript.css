@@ -2,7 +2,16 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+  min-height: 100vh;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  color: #003366;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.08);
 }
 
 .navbar {
@@ -10,27 +19,69 @@ body {
   top: 0;
   z-index: 1000;
   display: flex;
-  background-color: #004080;
-  padding: 0 20px;
+  justify-content: center;
+  background: rgba(0, 64, 128, 0.45);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-radius: 24px;
+  margin: 30px auto 0 auto;
+  width: 90%;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+  transition: background 0.5s, box-shadow 0.5s;
+  animation: fadeInDown 1s cubic-bezier(.39,.575,.565,1) both;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .navbar a {
   color: white;
-  padding: 14px 20px;
+  padding: 14px 28px;
   text-decoration: none;
   text-align: center;
+  border-radius: 18px;
+  margin: 8px 8px;
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: background 0.3s, color 0.3s, transform 0.2s;
 }
 
 .navbar a:hover {
-  background-color: #0066cc;
+  background: rgba(0, 102, 204, 0.35);
+  color: #e0e7ff;
+  transform: translateY(-2px) scale(1.05);
 }
 
 .navbar a.active {
-  background-color: #00264d;
+  background: rgba(0, 38, 77, 0.55);
+  color: #fff;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
 }
 
 .container {
-  padding: 20px;
+  padding: 32px 28px;
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  animation: fadeIn 1.2s cubic-bezier(.39,.575,.565,1) both;
+  transition: box-shadow 0.4s, background 0.4s;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 form {
@@ -43,6 +94,16 @@ form {
 input, button {
   padding: 10px;
   font-size: 14px;
+  border-radius: 12px;
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,0.7);
+  transition: box-shadow 0.3s, background 0.3s;
+}
+
+input:focus {
+  box-shadow: 0 0 0 2px #00408033;
+  background: rgba(255,255,255,0.95);
 }
 
 button {
@@ -50,12 +111,23 @@ button {
   color: white;
   border: none;
   cursor: pointer;
+  border-radius: 16px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+  background-color: #0066cc;
+  transform: scale(1.05);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
+  background-color: rgba(255,255,255,0.7);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+  animation: fadeIn 1.2s cubic-bezier(.39,.575,.565,1) both;
 }
 
 th, td {
@@ -65,6 +137,17 @@ th, td {
 }
 
 th {
-  background-color: #004080;
+  background-color: rgba(0, 64, 128, 0.85);
   color: white;
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    flex-wrap: wrap;
+    width: 98%;
+  }
+  .container {
+    max-width: 98%;
+    padding: 18px 6px;
+  }
 }
