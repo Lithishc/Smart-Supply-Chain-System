@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory Management</title>
+  <link rel="stylesheet" href="inventoryscript.css">
+</head>
+<body>
+    <div class="navbar">
+  <a href="index.html">Dashboard</a>
+  <a href="inventory.html" class="active">Inventory</a>
+  <a href="procurement.html">Procurement</a>
+  <a href="deals.html">Deals & Quotes</a>
+  <a href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
+
+   <!-- Inventory Management Section -->
+  <div class="container">
+    <h2>Inventory Management</h2>
+    <form id="add-item-form">
+      <input type="text" id="item-ID" placeholder="Item ID" required>
+      <input type="text" id="item-name" placeholder="Item Name" required>
+      <input type="text" id="item-desc" placeholder="Description" required>
+      <input type="text" id="item-category" placeholder="Category" required>
+      <input type="number" id="item-qty" placeholder="Quantity" required>
+      <input type="text" id="item-price" placeholder="Price" required>
+      <input type="text" id="item-supplier" placeholder="Supplier" required>
+      <input type="text" id="item-location" placeholder="Location" required>
+      <button type="submit">Add Item</button>
+    </form>
+
+    <table id="inventory-table">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Item Name</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Quantity</th>
+          <th>Price</th>
+          <th>Supplier</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Inventory items will appear here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module" src="inventory.js"></script>
+</body>
+</html>

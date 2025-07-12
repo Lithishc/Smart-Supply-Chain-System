@@ -8,82 +8,20 @@
 <body>
 
   <div class="navbar">
-    <a href="#" class="active">Dashboard</a>
-    <a href="#">Inventory</a>
-    <a href="#">Procurement</a>
-    <a href="#">Deals & Quotes</a>
-    <a href="#">Orders</a>
-    <a href="#">Profile</a>
-  </div>
+  <a href="dashboard.html" class="active">Dashboard</a>
+  <a href="inventory.html" >Inventory</a>
+  <a href="procurement.html">Procurement</a>
+  <a href="deals.html">Deals & Quotes</a>
+  <a href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
+
 
   <div class="content">
     <h2>Welcome to Smart Supply Chain Platform</h2>
     <p>Select a tab from the menu to begin.</p>
   </div>
 
-  <!-- Inventory Management Section -->
-  <div id="inventory-section" style="display:none;">
-    <h2>Inventory Management</h2>
-    <form id="add-item-form">
-      <input type="text" id="item-name" placeholder="Item Name" required>
-      <input type="text" id="item-desc" placeholder="Description" required>
-      <input type="text" id="item-ID" placeholder="Item ID" required>
-      <input type="text" id="serial-no" placeholder="Serial No" required>
-      <input type="text" id="item-category" placeholder="Category" required>
-      <input type="number" id="item-qty" placeholder="Quantity" required>
-      <input type="text" id="item-price" placeholder="Price" required>
-      <input type="text" id="item-supplier" placeholder="Supplier" required>
-      <input type="text" id="item-location" placeholder="Location" required>
-      <button type="submit">Add Item</button>
-    </form>
-    <table id="inventory-table">
-      <thead>
-        <tr>
-          <th>Item Name</th>
-          <th>Quantity</th>
-          <th>Location</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Inventory items will appear here -->
-      </tbody>
-    </table>
-  </div>
-
-  <script>
-  // Simple navigation logic
-  document.querySelectorAll('.navbar a').forEach((tab, idx) => {
-    tab.addEventListener('click', function(e) {
-      e.preventDefault();
-      document.querySelectorAll('.navbar a').forEach(a => a.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelector('.content').style.display = idx === 1 ? 'none' : '';
-      document.getElementById('inventory-section').style.display = idx === 1 ? '' : 'none';
-    });
-  });
-
-  // Inventory logic
-  const form = document.getElementById('add-item-form');
-  const tableBody = document.querySelector('#inventory-table tbody');
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const name = document.getElementById('item-name').value;
-    const qty = document.getElementById('item-qty').value;
-    const loc = document.getElementById('item-location').value;
-
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${name}</td>
-      <td>${qty}</td>
-      <td>${loc}</td>
-      <td><button onclick="this.closest('tr').remove()">Delete</button></td>
-    `;
-    tableBody.appendChild(row);
-    form.reset();
-  });
-  </script>
 
 </body>
 </html>
