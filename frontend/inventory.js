@@ -1,7 +1,7 @@
 // Import Firebase modules from your config and Firestore functions from CDN
 import { auth, db } from "../backend/firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // DOM Elements
 const form = document.getElementById('add-item-form');
@@ -50,23 +50,8 @@ onAuthStateChanged(auth, async (user) => {
 async function loadInventory(uid) {
   tableBody.innerHTML = "";
   const querySnapshot = await getDocs(collection(db, "users", uid, "inventory"));
-  for (const docSnap of querySnapshot.docs) {
+  querySnapshot.forEach((docSnap) => {
     const item = docSnap.data();
-
-    // Check if an open procurement request exists for this item
-    let requestStatus = "";
-    const reqQuery = query(
-      collection(db, "users", uid, "procurementRequests"),
-      where("itemID", "==", item.itemID),
-      where("status", "==", "open")
-    );
-    const reqSnap = await getDocs(reqQuery);
-    if (!reqSnap.empty) {
-      requestStatus = "Requested";
-    } else {
-      requestStatus = "-";
-    }
-
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.itemID}</td>
@@ -77,14 +62,13 @@ async function loadInventory(uid) {
       <td>${item.price}</td>
       <td>${item.supplier}</td>
       <td>${item.location}</td>
-      <td>${requestStatus}</td>
       <td>
         <button class="edit-btn" data-id="${docSnap.id}">Edit</button>
         <button class="delete-btn" data-id="${docSnap.id}">Delete</button>
       </td>
     `;
     tableBody.appendChild(row);
-  }
+  });
 
   // Attach event listeners for edit and delete
   document.querySelectorAll('.edit-btn').forEach(btn => {
