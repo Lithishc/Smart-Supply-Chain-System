@@ -21,7 +21,7 @@ body {
 }
 
 .navbar a:hover {
-  background-color: #0066cc;
+  background-color: #074480;
 }
 
 .navbar a.active {
@@ -31,4 +31,100 @@ body {
 /* Main Content Area */
 .content {
   padding: 20px;
+}
+
+/* Inventory Table Styles */
+#inventory-table th, #inventory-table td {
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: #f7f6f6;
+  border: none;
+  font-size: 15px;
+  text-align: center;
+}
+
+#inventory-table th {
+  background: #b6d0e5;
+  color: #333;
+  font-weight: 600;
+}
+
+#inventory-table tr {
+  margin-bottom: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+#inventory-table {
+  border-collapse: separate;
+  border-spacing: 3 8px;
+  width: 98%; /* Make table a bit shorter in width */
+  margin: 10px ;
+  background: transparent;
+}
+
+/* Style the input boxes */
+#add-item-form input, #add-item-form button {
+  border-radius: 10px;
+  border: 1px solid #070707;
+  padding: 8px 12px;
+  margin: 6px 10px;
+  font-size: 15px;
+  background: #fafafb;
+  transition: border 0.2s;
+  width: 160px; /* Make input boxes shorter */
+  box-sizing: border-box;
+}
+
+#add-item-form input:focus {
+  border: 2px solid #000000;
+  outline: none;
+  background: #ffffff;
+}
+
+#add-item-form button {
+  background: #f2ff00;
+  color: #000000;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+#add-item-form button:hover {
+  background: #cccccc;
+}
+
+/* Inventory Section Styles */
+#inventory-section h2 {
+  text-align: center;
+}
+
+.inventory-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 5 10px;
+}
+
+.inventory-header h2 {
+  margin: 5;
+  text-align: left;
+}
+
+#show-add-form-btn {
+  background: #f2ff00;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#show-add-form-btn:hover {
+  background: #cccccc;
 }

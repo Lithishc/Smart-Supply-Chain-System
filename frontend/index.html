@@ -23,11 +23,14 @@
 
   <!-- Inventory Management Section -->
   <div id="inventory-section" style="display:none;">
-    <h2>Inventory Management</h2>
-    <form id="add-item-form">
+    <div class="inventory-header">
+      <h2>Inventory Management</h2>
+      <button id="show-add-form-btn" type="button">Add Item</button>
+    </div>
+    <form id="add-item-form" style="display:none;">
+      <input type="text" id="item-ID" placeholder="Item ID" required>
       <input type="text" id="item-name" placeholder="Item Name" required>
       <input type="text" id="item-desc" placeholder="Description" required>
-      <input type="text" id="item-ID" placeholder="Item ID" required>
       <input type="text" id="serial-no" placeholder="Serial No" required>
       <input type="text" id="item-category" placeholder="Category" required>
       <input type="number" id="item-qty" placeholder="Quantity" required>
@@ -39,10 +42,15 @@
     <table id="inventory-table">
       <thead>
         <tr>
+          <th>Item ID</th>
           <th>Item Name</th>
+          <th>Description</th>
+          <th>Serial No</th>
+          <th>Category</th>
           <th>Quantity</th>
+          <th>Price</th>
+          <th>Supplier</th>
           <th>Location</th>
-          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -70,18 +78,42 @@
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('item-name').value;
+    const id = document.getElementById('item-ID').value;
+    const desc = document.getElementById('item-desc').value;
+    const serial = document.getElementById('serial-no').value;
+    const category = document.getElementById('item-category').value;
     const qty = document.getElementById('item-qty').value;
+    const price = document.getElementById('item-price').value;
+    const supplier = document.getElementById('item-supplier').value;
     const loc = document.getElementById('item-location').value;
 
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${name}</td>
-      <td>${qty}</td>
-      <td>${loc}</td>
+      <td>${id}</td> 
+      <td>${name}</td> 
+      <td>${desc}</td> 
+      <td>${serial}</td> 
+      <td>${category}</td> 
+      <td>${qty}</td> 
+      <td>${price}</td> 
+      <td>${supplier}</td> 
+      <td>${loc}</td> 
       <td><button onclick="this.closest('tr').remove()">Delete</button></td>
     `;
     tableBody.appendChild(row);
     form.reset();
+  });
+
+  // Show/hide add item form
+  document.getElementById('show-add-form-btn').addEventListener('click', function() {
+    const form = document.getElementById('add-item-form');
+    if (form.style.display === 'none' || form.style.display === '') {
+      form.style.display = 'block';
+      this.textContent = 'Cancel';
+    } else {
+      form.style.display = 'none';
+      this.textContent = 'Add Item';
+    }
   });
   </script>
 
