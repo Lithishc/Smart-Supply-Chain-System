@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Procurement Management</title>
-  <link rel="stylesheet" href="inventorystyle.css">
+  <title>Orders</title>
+  <link rel="stylesheet" href="ordersstyle.css">
 </head>
 <body>
   <h1>Smart Supply Chain</h1>
   <div class="navbar">
     <a href="index.html">Dashboard</a>
     <a href="inventory.html">Inventory</a>
-    <a href="procurement.html" class="active">Procurement</a>
+    <a href="procurement.html">Procurement</a>
     <a href="deals.html">Deals & Quotes</a>
-    <a href="orders.html">Orders</a>
+    <a href="orders.html" class="active">Orders</a>
     <a href="profile.html">Profile</a>
   </div>
   <div class="container">
-    <h2>Procurement Requests</h2>
-    <table id="procurement-table">
+    <h2>Accepted Orders</h2>
+    <table id="orders-table">
       <thead>
         <tr>
           <th>Item Name</th>
-          <th>Current Qty</th>
-          <th>Preset Mode</th>
-          <th>Preset Qty</th>
-          <th>Request Status</th>
-          <th>Supplier Offers</th>
+          <th>Quantity</th>
+          <th>Supplier</th>
+          <th>Price</th>
+          <th>Details</th>
+          <th>Status</th>
+          <th>Order Date</th>
         </tr>
       </thead>
       <tbody>
@@ -33,6 +34,6 @@
       </tbody>
     </table>
   </div>
-  <script type="module" src="../backend/procurement.js"></script>
+  <script type="module" src="../backend/orders.js"></script>
 </body>
 </html>

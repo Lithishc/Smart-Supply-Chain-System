@@ -27,6 +27,7 @@ async function loadInventoryForProcurement(uid) {
     let offersHtml = "-";
     let requestStatus = "-";
     let requestId = null;
+    let offerCount = 0;
 
     const reqQuery = query(
       collection(db, "users", uid, "procurementRequests"),
@@ -39,15 +40,13 @@ async function loadInventoryForProcurement(uid) {
       requestId = docRef.id;
     });
 
-    // Show supplier offers if request exists
-    if (existingRequest && existingRequest.supplierResponses && existingRequest.supplierResponses.length > 0) {
-      offersHtml = existingRequest.supplierResponses.map((offer, idx) => `
-        <div style="margin-bottom:8px; border-bottom:1px solid #eee;">
-          <b>${offer.supplierName}</b>: ₹${offer.price}<br>
-          <span>${offer.details}</span><br>
-          <button onclick="window.acceptOffer('${uid}','${requestId}',${idx})">Accept</button>
-        </div>
-      `).join("");
+    if (existingRequest && existingRequest.supplierResponses) {
+      offerCount = existingRequest.supplierResponses.length;
+      offersHtml = `
+        <button onclick="window.viewOffers('${uid}','${requestId}')">
+          View Offers (${offerCount})
+        </button>
+      `;
       requestStatus = "Requested";
     } else if (existingRequest) {
       requestStatus = "Requested";
@@ -73,7 +72,50 @@ async function loadInventoryForProcurement(uid) {
   }
 }
 
-// Accept supplier offer
+// Modal or section to show offers
+window.viewOffers = async (uid, requestId) => {
+  const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
+  const reqSnap = await getDoc(reqRef);
+  if (!reqSnap.exists()) return;
+  const reqData = reqSnap.data();
+  const offers = reqData.supplierResponses || [];
+  let html = `<h3>Supplier Offers</h3>`;
+  if (offers.length === 0) {
+    html += "<p>No offers yet.</p>";
+  } else {
+    offers.forEach((offer, idx) => {
+      html += `
+        <div style="border-bottom:1px solid #eee; margin-bottom:10px; padding-bottom:8px;">
+          <b>${offer.supplierName}</b>: ₹${offer.price}<br>
+          <span>${offer.details}</span><br>
+          <button onclick="window.acceptOffer('${uid}','${requestId}',${idx})">Accept</button>
+          <button onclick="window.rejectOffer('${uid}','${requestId}',${idx})">Reject</button>
+        </div>
+      `;
+    });
+  }
+  // Show in a modal or a div (for demo, use alert or a simple div)
+  let modal = document.getElementById('offers-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'offers-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = '#fff';
+    modal.style.padding = '24px';
+    modal.style.borderRadius = '16px';
+    modal.style.boxShadow = '0 8px 32px 0 rgba(31,38,135,0.18)';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `<button onclick="document.body.removeChild(this.parentNode)">Close</button><div id="offers-content"></div>`;
+    document.body.appendChild(modal);
+  }
+  modal.querySelector('#offers-content').innerHTML = html;
+  modal.style.display = 'block';
+};
+
+// Accept supplier offer and create order
 window.acceptOffer = async (uid, requestId, offerIdx) => {
   const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
   const reqSnap = await getDoc(reqRef);
@@ -84,7 +126,6 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
   await updateDoc(reqRef, reqData);
 
   // Also update global procurementRequests
-  // Find the global request by itemID, userUid, and status open
   const globalReqQuery = query(
     collection(db, "procurementRequests"),
     where("itemID", "==", reqData.itemID),
@@ -99,7 +140,33 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     });
   }
 
-  alert("Offer accepted!");
+  // Add to orders
+  await addDoc(collection(db, "users", uid, "orders"), {
+    itemID: reqData.itemID,
+    itemName: reqData.itemName,
+    quantity: reqData.requestedQty,
+    supplier: reqData.supplierResponses[offerIdx].supplierName,
+    price: reqData.supplierResponses[offerIdx].price,
+    details: reqData.supplierResponses[offerIdx].details,
+    status: "confirmed",
+    createdAt: new Date()
+  });
+
+  alert("Offer accepted and order created!");
+  document.getElementById('offers-modal').remove();
+  loadInventoryForProcurement(uid);
+};
+
+// Reject supplier offer
+window.rejectOffer = async (uid, requestId, offerIdx) => {
+  const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
+  const reqSnap = await getDoc(reqRef);
+  if (!reqSnap.exists()) return;
+  const reqData = reqSnap.data();
+  reqData.supplierResponses.splice(offerIdx, 1);
+  await updateDoc(reqRef, { supplierResponses: reqData.supplierResponses });
+  alert("Offer rejected.");
+  document.getElementById('offers-modal').remove();
   loadInventoryForProcurement(uid);
 };
 
