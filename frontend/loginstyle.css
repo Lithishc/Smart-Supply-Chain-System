@@ -10,60 +10,69 @@
 
 /* Full Page Gradient Background */
 body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #e3f0ff, #b6e0fe 60%, #e0ffe3 100%);
-    height: 100vh;
+    justify-content: center;
 }
 
 /* Container Styling */
 .container {
     display: flex;
-    width: 800px;
-    height: 500px;
-    border-radius: 20px;
-    background: #f8fafc;
-    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+    max-width: 900px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.95);
+    border-radius: 32px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13), 0 1.5px 8px 0 rgba(0,0,0,0.09);
     overflow: hidden;
+    width: 100%;
 }
 
 /* Left Section - Welcome Text */
 .left-section {
-    flex: 1;
-    background: linear-gradient(135deg, #2193b0, #6dd5ed 60%, #b2f7cc 100%);
+    flex: 1.2;
+    background: linear-gradient(135deg, #4a90e2 0%, #003366 100%);
     color: #fff;
-    padding: 50px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    text-align: center;
+    align-items: flex-start;
+    padding: 48px 36px;
 }
 
 .left-section h1 {
-    font-size: 28px;
-    margin-bottom: 10px;
+    font-size: 2.2rem;
+    margin-bottom: 18px;
+    letter-spacing: 1px;
 }
 
 .left-section p {
-    font-size: 14px;
-    opacity: 0.8;
+    font-size: 1.1rem;
+    opacity: 0.95;
 }
 
 /* Right Section - Login Form */
 .right-section {
-    flex: 1;
+    flex: 1.5;
+    padding: 48px 36px;
     display: flex;
-    color: #222; /* Darker text for contrast */
-    text-shadow: none;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    padding: 40px;
+    align-items: center; /* Center content horizontally */
+    background: #fff;
 }
 
-
-
+.right-section h2 {
+    margin-bottom: 24px;
+    color: #003366;
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
 
 /* Toggle Buttons */
 .toggle-container button {
@@ -101,9 +110,10 @@ body {
 /* Login Form */
 #loginForm {
     width: 100%;
-    max-width: 300px;
     display: flex;
     flex-direction: column;
+    align-items: center; /* Center form fields */
+    gap: 0;
 }
 
 #loginForm input {
@@ -129,6 +139,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: 0.3s;
+    margin-bottom: 18px;
 }
 
 #loginForm button:hover {
@@ -138,31 +149,31 @@ body {
 
 /* Extra Links - Centered and Aligned */
 .extra-links {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 12px; /* Space from login button */
+    text-align: center;
+    margin-bottom: 8px;
     font-size: 14px;
 }
 
-/* Forgot Password Link */
-#forgotPassword {
-    color: #2193b0;
+.extra-links a {
+    color: #004080;
     text-decoration: none;
     font-weight: 500;
+    font-size: 1rem;
+    transition: color 0.2s;
 }
 
-#forgotPassword:hover {
+.extra-links a:hover {
+    color: #0066cc;
     text-decoration: underline;
 }
 
 /* Gray Horizontal Line */
 .divider {
     width: 100%;
-    max-width: 300px; /* Matches input width */
-    height: 1px;
-    background: #b6e0fe;
-    margin: 15px auto; /* Space after links */
+    height: 1.5px;
+    background: #e0e7ef;
+    margin: 18px 0 10px 0;
+    border-radius: 2px;
 }
 
 /* Create New Account Button (Same as Login Button) */
@@ -189,18 +200,90 @@ body {
 
 /* Error Message */
 #errorMessage {
-    color: red;
-    font-size: 14px;
+    color: #c0392b;
+    font-size: 1rem;
     text-align: center;
-    margin-top: 5px; /* Spacing from other elements */
+    margin-top: 6px;
 }
 
-/* Error Message */
-#errorMessage {
-    color: red;
-    font-size: 14px;
+#successMessage {
+    color: #27ae60;
+    font-size: 1rem;
     text-align: center;
-    margin-top: 5px; /* Spacing from other elements */
+    margin-top: 6px;
+}
+
+/* Style for the registration form fields and button */
+#registerForm {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#registerForm input[type="text"],
+#registerForm input[type="email"],
+#registerForm input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 30px;
+    background: #eaf6fb;
+    font-size: 14px;
+    outline: none;
+    text-indent: 10px;
+    margin-bottom: 0;
+    box-sizing: border-box;
+    transition: border 0.2s, background 0.2s;
+}
+
+#registerForm input:focus {
+    background: #fff;
+    border: 1.5px solid #4a90e2;
+}
+
+#registerForm button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #2193b0, #6dd5ed 80%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 8px;
+}
+
+#registerForm button[type="submit"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Make sure error/success messages are styled and spaced */
+#registerForm #errorMessage,
+#registerForm #successMessage {
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 800px) {
+  .container {
+    flex-direction: column;
+    max-width: 98vw;
+    margin: 16px;
+  }
+  .left-section, .right-section {
+    padding: 32px 16px;
+  }
+  .left-section {
+    align-items: center;
+    text-align: center;
+  }
 }
 
 

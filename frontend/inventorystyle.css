@@ -67,12 +67,8 @@ h1 {
 }
 
 .container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 32px 28px;
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  backdrop-filter: blur(16px) saturate(180%);
   animation: fadeIn 1.2s cubic-bezier(.39,.575,.565,1) both;
   transition: box-shadow 0.4s, background 0.4s;
 }
@@ -86,48 +82,6 @@ h1 {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.heading-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-#toggle-form-btn {
-  min-width: 120px;
-  padding: 10px 20px;
-  font-size: 14px;
-  border-radius: 16px;
-  background-color: #004080;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
-
-#toggle-form-btn:hover {
-  background-color: #0066cc;
-  transform: scale(1.05);
-}
-
-.form-container {
-  display: none;
-  width: 95%;
-  max-width: 1200px;
-  margin: 24px auto 24px auto;
-  padding: 24px 24px 16px 24px;
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13), 0 1.5px 8px 0 rgba(0,0,0,0.09);
-  transition: all 0.4s ease;
-  animation: popout 0.22s;
-}
-
-@keyframes popout {
-  from { transform: translateY(-20px) scale(0.98); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 form {
@@ -152,17 +106,16 @@ input:focus {
   background: rgba(255,255,255,0.95);
 }
 
-form button[type="submit"] {
+button {
   background-color: #004080;
   color: white;
   border: none;
   cursor: pointer;
   border-radius: 16px;
   transition: background 0.3s, transform 0.2s;
-  grid-column: span 2;
 }
 
-form button[type="submit"]:hover {
+button:hover {
   background-color: #0066cc;
   transform: scale(1.05);
 }
