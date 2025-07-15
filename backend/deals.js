@@ -1,5 +1,5 @@
 import { db } from "./firebase-config.js";
-import { collection, getDocs, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const tableBody = document.querySelector('#supplier-table tbody');
 
@@ -34,10 +34,32 @@ window.sendOffer = async (e, reqId) => {
   const supplierName = form.supplierName.value;
   const price = form.price.value;
   const details = form.details.value;
+
+  // Update global procurementRequests
   const reqRef = doc(db, "procurementRequests", reqId);
   await updateDoc(reqRef, {
     supplierResponses: arrayUnion({ supplierName, price, details })
   });
+
+  // Also update the user's procurementRequests
+  const reqSnap = await getDoc(reqRef);
+  if (reqSnap.exists()) {
+    const reqData = reqSnap.data();
+    const userUid = reqData.userUid;
+    // Find the user's request with same itemID and status open
+    const userReqQuery = query(
+      collection(db, "users", userUid, "procurementRequests"),
+      where("itemID", "==", reqData.itemID),
+      where("status", "==", "open")
+    );
+    const userReqSnap = await getDocs(userReqQuery);
+    for (const userDoc of userReqSnap.docs) {
+      await updateDoc(doc(db, "users", userUid, "procurementRequests", userDoc.id), {
+        supplierResponses: arrayUnion({ supplierName, price, details })
+      });
+    }
+  }
+
   alert("Offer sent!");
   loadOpenRequests();
 };

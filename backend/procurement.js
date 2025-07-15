@@ -20,6 +20,7 @@ async function loadInventoryForProcurement(uid) {
     const item = itemDoc.data();
     const presetMode = item.presetMode || false;
     const presetQty = Number(item.presetQty) || 0;
+    const requestQty = Number(item.requestQty) || 0; // This is the user-set request quantity
     const quantity = Number(item.quantity) || 0;
 
     // Check if procurement request already exists for this item and is open
@@ -39,6 +40,26 @@ async function loadInventoryForProcurement(uid) {
       existingRequest = docRef.data();
       requestId = docRef.id;
     });
+
+    // --- AUTOMATION: Create request if needed ---
+    // Use requestQty if set, otherwise fallback to presetQty
+    const qtyToRequest = requestQty > 0 ? requestQty : presetQty;
+    if (presetMode && qtyToRequest > 0 && quantity < presetQty && !existingRequest) {
+      const requestData = {
+        itemID: item.itemID,
+        itemName: item.itemName,
+        requestedQty: qtyToRequest,
+        currentQty: quantity,
+        status: "open",
+        supplierResponses: [],
+        userUid: uid,
+        createdAt: new Date()
+      };
+      // Add to user's procurementRequests
+      await addDoc(collection(db, "users", uid, "procurementRequests"), requestData);
+      // Add to global procurementRequests for suppliers
+      await addDoc(collection(db, "procurementRequests"), requestData);
+    }
 
     if (existingRequest && existingRequest.supplierResponses) {
       offerCount = existingRequest.supplierResponses.length;
@@ -64,6 +85,10 @@ async function loadInventoryForProcurement(uid) {
         <td>
           <input type="number" min="1" value="${item.presetQty || ""}" style="width:60px;"
             onchange="window.setPresetQty('${itemDoc.id}', this.value)">
+        </td>
+        <td>
+          <input type="number" min="1" value="${item.requestQty || ""}" style="width:60px;"
+            onchange="window.setRequestQty('${itemDoc.id}', this.value)">
         </td>
         <td>${requestStatus}</td>
         <td>${offersHtml}</td>
@@ -115,6 +140,7 @@ window.viewOffers = async (uid, requestId) => {
   modal.style.display = 'block';
 };
 
+
 // Accept supplier offer and create order
 window.acceptOffer = async (uid, requestId, offerIdx) => {
   const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
@@ -159,12 +185,33 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
 
 // Reject supplier offer
 window.rejectOffer = async (uid, requestId, offerIdx) => {
+  // Update user's procurementRequests
   const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
   const reqSnap = await getDoc(reqRef);
   if (!reqSnap.exists()) return;
   const reqData = reqSnap.data();
   reqData.supplierResponses.splice(offerIdx, 1);
   await updateDoc(reqRef, { supplierResponses: reqData.supplierResponses });
+
+  // Also update global procurementRequests
+  const globalReqQuery = query(
+    collection(db, "procurementRequests"),
+    where("itemID", "==", reqData.itemID),
+    where("userUid", "==", uid),
+    where("status", "==", "open")
+  );
+  const globalSnap = await getDocs(globalReqQuery);
+  for (const docRef of globalSnap.docs) {
+    // Get the global doc's supplierResponses, remove the same offer, and update
+    const globalDocRef = doc(db, "procurementRequests", docRef.id);
+    const globalDocSnap = await getDoc(globalDocRef);
+    if (globalDocSnap.exists()) {
+      const globalData = globalDocSnap.data();
+      globalData.supplierResponses.splice(offerIdx, 1);
+      await updateDoc(globalDocRef, { supplierResponses: globalData.supplierResponses });
+    }
+  }
+
   alert("Offer rejected.");
   document.getElementById('offers-modal').remove();
   loadInventoryForProcurement(uid);
@@ -185,3 +232,13 @@ window.setPresetQty = async (itemDocId, qty) => {
   await updateDoc(itemRef, { presetQty: qty });
   loadInventoryForProcurement(user.uid);
 };
+
+// Save request quantity to Firestore
+window.setRequestQty = async (itemDocId, qty) => {
+  const user = auth.currentUser;
+  if (!user) return;
+  const itemRef = doc(db, "users", user.uid, "inventory", itemDocId);
+  await updateDoc(itemRef, { requestQty: Number(qty) });
+  loadInventoryForProcurement(user.uid);
+};
+
