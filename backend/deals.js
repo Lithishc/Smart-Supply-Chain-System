@@ -1,5 +1,9 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+const auth = getAuth();
+const supplierUid = auth.currentUser ? auth.currentUser.uid : null;
 
 const tableBody = document.querySelector('#supplier-table tbody');
 
@@ -38,7 +42,7 @@ window.sendOffer = async (e, reqId) => {
   // Update global procurementRequests
   const reqRef = doc(db, "procurementRequests", reqId);
   await updateDoc(reqRef, {
-    supplierResponses: arrayUnion({ supplierName, price, details })
+    supplierResponses: arrayUnion({ supplierName, price, details, supplierUid })
   });
 
   // Also update the user's procurementRequests
@@ -55,7 +59,7 @@ window.sendOffer = async (e, reqId) => {
     const userReqSnap = await getDocs(userReqQuery);
     for (const userDoc of userReqSnap.docs) {
       await updateDoc(doc(db, "users", userUid, "procurementRequests", userDoc.id), {
-        supplierResponses: arrayUnion({ supplierName, price, details })
+        supplierResponses: arrayUnion({ supplierName, price, details, supplierUid })
       });
     }
   }

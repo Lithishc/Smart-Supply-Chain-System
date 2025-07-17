@@ -25,6 +25,7 @@ async function loadOrders(uid) {
     const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
     tableBody.innerHTML += `
       <tr>
+      <td>${order.itemID}</td>
         <td>${order.itemName}</td>
         <td>${order.quantity}</td>
         <td>${order.supplier}</td>
