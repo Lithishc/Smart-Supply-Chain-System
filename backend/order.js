@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const tableBody = document.querySelector('#orders-table tbody');
 
@@ -23,17 +23,49 @@ async function loadOrders(uid) {
   ordersSnap.forEach((docSnap) => {
     const order = docSnap.data();
     const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+    let procurementId = order.procurementId || (order.acceptedOffer && order.acceptedOffer.procurementId) || null;
+
+    // Build status cell with button if eligible
+    let statusCell = order.status;
+    if (order.status === "ordered" && procurementId) {
+      statusCell += ` <button onclick="window.markProcurementFulfilled('${uid}', '${procurementId}')"
+        style="margin-left:8px;">Mark as Fulfilled & Update Inventory</button>`;
+    }
+
     tableBody.innerHTML += `
       <tr>
-      <td>${order.itemID}</td>
+        <td>${order.itemID}</td>
         <td>${order.itemName}</td>
         <td>${order.quantity}</td>
         <td>${order.supplier}</td>
         <td>₹${order.price}</td>
         <td>${order.details}</td>
-        <td>${order.status}</td>
+        <td>${statusCell}</td>
         <td>${date.toLocaleString()}</td>
       </tr>
     `;
   });
 }
+
+window.markProcurementFulfilled = async (uid, procurementId) => {
+  // Mark procurement request as fulfilled
+  const procurementRef = doc(db, "users", uid, "procurementRequests", procurementId);
+  await updateDoc(procurementRef, { fulfilled: true });
+  alert("Procurement marked as fulfilled. Please update your inventory quantity.");
+
+  // Find the itemID from the procurement request
+  const procurementSnap = await getDoc(procurementRef);
+  let itemID = null;
+  if (procurementSnap.exists()) {
+    itemID = procurementSnap.data().itemID;
+  }
+  const newQty = prompt("Enter new stock quantity after procurement:");
+  if (newQty && itemID) {
+    const inventoryQuery = query(collection(db, "users", uid, "inventory"), where("itemID", "==", itemID));
+    const invSnap = await getDocs(inventoryQuery);
+    for (const docRef of invSnap.docs) {
+      await updateDoc(doc(db, "users", uid, "inventory", docRef.id), { quantity: Number(newQty) });
+    }
+  }
+
+};

@@ -30,21 +30,31 @@ async function loadInventoryForProcurement(uid) {
     let requestId = null;
     let offerCount = 0;
 
+    // Find the latest procurement request for this item
     const reqQuery = query(
       collection(db, "users", uid, "procurementRequests"),
-      where("itemID", "==", item.itemID),
-      where("status", "==", "open")
+      where("itemID", "==", item.itemID)
     );
     const reqSnap = await getDocs(reqQuery);
+    let lastRequest = null;
     reqSnap.forEach(docRef => {
-      existingRequest = docRef.data();
-      requestId = docRef.id;
+      const data = docRef.data();
+      if (!lastRequest || (data.createdAt && data.createdAt > lastRequest.createdAt)) {
+        lastRequest = data;
+        requestId = docRef.id;
+      }
+      if (data.status === "open") {
+        existingRequest = data;
+        requestId = docRef.id;
+      }
     });
 
     // --- AUTOMATION: Create request if needed ---
     // Use requestQty if set, otherwise fallback to presetQty
     const qtyToRequest = requestQty > 0 ? requestQty : presetQty;
-    if (presetMode && qtyToRequest > 0 && quantity < presetQty && !existingRequest) {
+    // Only automate if no open request OR last request is fulfilled
+    const shouldAutomate = presetMode && qtyToRequest > 0 && quantity < presetQty && (!existingRequest && (!lastRequest || lastRequest.fulfilled === true));
+    if (shouldAutomate) {
       const requestData = {
         itemID: item.itemID,
         itemName: item.itemName,
@@ -53,7 +63,8 @@ async function loadInventoryForProcurement(uid) {
         status: "open",
         supplierResponses: [],
         userUid: uid,
-        createdAt: new Date()
+        createdAt: new Date(),
+        fulfilled: false // Track if order is fulfilled
       };
       // Add to user's procurementRequests
       const userReqRef = await addDoc(collection(db, "users", uid, "procurementRequests"), requestData);
@@ -67,14 +78,14 @@ async function loadInventoryForProcurement(uid) {
       await updateDoc(globalReqRef, { globalRequestId: globalReqRef.id });
     }
 
-    if (existingRequest && existingRequest.supplierResponses) {
+    if (existingRequest && Array.isArray(existingRequest.supplierResponses) && existingRequest.supplierResponses.length > 0) {
       offerCount = existingRequest.supplierResponses.length;
       offersHtml = `
         <button onclick="window.viewOffers('${uid}','${requestId}')">
           View Offers (${offerCount})
         </button>
       `;
-      requestStatus = "Requested";
+      requestStatus = "Offers Received";
     } else if (existingRequest) {
       requestStatus = "Requested";
       offersHtml = "No offers yet";
@@ -160,7 +171,8 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
   // Update status in both user and global requests
   await updateDoc(reqRef, {
     status: "ordered",
-    acceptedOffer
+    acceptedOffer,
+    accepted: true
   });
   const globalReqQuery = query(
     collection(db, "procurementRequests"),
@@ -172,7 +184,8 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
   for (const docRef of globalSnap.docs) {
     await updateDoc(doc(db, "procurementRequests", docRef.id), {
       status: "ordered",
-      acceptedOffer
+      acceptedOffer,
+      accepted: true
     });
   }
 
@@ -185,7 +198,8 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     price: acceptedOffer.price,
     details: acceptedOffer.details,
     status: "ordered",
-    createdAt: new Date()
+    createdAt: new Date(),
+    procurementId: requestId // <-- Add this line!
   });
 
   // Add order for supplier (if supplierUid is present)
