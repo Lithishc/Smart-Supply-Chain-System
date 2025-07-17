@@ -48,9 +48,20 @@ async function loadOrders(uid) {
 }
 
 window.markProcurementFulfilled = async (uid, procurementId) => {
-  // Mark procurement request as fulfilled
+  // Mark procurement request as fulfilled in user's collection
   const procurementRef = doc(db, "users", uid, "procurementRequests", procurementId);
   await updateDoc(procurementRef, { fulfilled: true });
+
+  // Also mark as fulfilled in global procurementRequests collection
+  const globalQuery = query(
+    collection(db, "procurementRequests"),
+    where("requestId", "==", procurementId)
+  );
+  const globalSnap = await getDocs(globalQuery);
+  for (const globalDoc of globalSnap.docs) {
+    await updateDoc(doc(db, "procurementRequests", globalDoc.id), { fulfilled: true });
+  }
+
   alert("Procurement marked as fulfilled. Please update your inventory quantity.");
 
   // Find the itemID from the procurement request
@@ -68,4 +79,16 @@ window.markProcurementFulfilled = async (uid, procurementId) => {
     }
   }
 
+  // Mark the order status as fulfilled
+  const ordersQuery = query(
+    collection(db, "users", uid, "orders"),
+    where("procurementId", "==", procurementId)
+  );
+  const ordersSnap = await getDocs(ordersQuery);
+  for (const orderDoc of ordersSnap.docs) {
+    await updateDoc(doc(db, "users", uid, "orders", orderDoc.id), { status: "fulfilled" });
+  }
+
+  // Optionally reload orders table to reflect changes
+  loadOrders(uid);
 };
