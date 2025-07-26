@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Supplier Profile</title>
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+  <div class="navbar">
+    <h1>SCM Supplier Portal</h1>
+    <div class="profile-avatar">
+      <img src="avatar.jpg" alt="Profile Avatar" />
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="viewMode" style="display: none;">
+      <h2>Supplier Profile (View)</h2>
+      <div id="profileData"></div>
+      <button id="editBtn" class="small-btn">✏️ Edit</button>
+    </div>
+
+    <form id="editForm">
+      <h2>Edit Supplier Profile</h2>
+
+      <section>
+        <h3>🧾 Basic Info</h3>
+        <input type="text" name="companyName" placeholder="Company Name" />
+        <input type="text" name="regNumber" placeholder="Registration Number" />
+        <input type="text" name="bizType" placeholder="Business Type" />
+        <input type="text" name="yearsOp" placeholder="Years in Operation" />
+        <input type="url" name="website" placeholder="Website" />
+        <textarea name="address" placeholder="Headquarters Address"></textarea>
+        <input type="email" name="email" placeholder="Email" />
+        <input type="tel" name="phone" placeholder="Phone" />
+
+        <h3>✅ Legitimacy & Verification</h3>
+        <input type="text" name="license" placeholder="Business License Certificate (link or note)" />
+        <input type="text" name="taxId" placeholder="Tax ID / GST Certificate" />
+        <input type="text" name="certifications" placeholder="Certifications (ISO, CE, FSSAI, etc.)" />
+        <input type="text" name="bankDetails" placeholder="Verified Bank Account Details" />
+        <input type="text" name="thirdPartyVerifications" placeholder="Third-party Verifications" />
+
+        <h3>🏭 Operational & Delivery Capacity</h3>
+        <input type="text" name="capacity" placeholder="Manufacturing Capacity" />
+        <input type="text" name="warehouses" placeholder="Warehouse Locations" />
+        <input type="text" name="logistics" placeholder="Logistics Partners" />
+        <input type="text" name="reach" placeholder="Delivery Reach" />
+        <input type="text" name="areas" placeholder="Areas Served" />
+        <input type="text" name="deliveryTime" placeholder="Average Delivery Time" />
+        <input type="text" name="fulfillmentRate" placeholder="Fulfillment Rate (%)" />
+
+        <h3>📦 Product Portfolio & Inventory</h3>
+        <input type="text" name="categories" placeholder="Categories Supplied" />
+        <input type="text" name="topProducts" placeholder="Top Products" />
+        <input type="text" name="moq" placeholder="MOQ (Minimum Order Quantity)" />
+        <input type="text" name="stock" placeholder="Stock Visibility" />
+        <input type="text" name="pricing" placeholder="Dynamic Pricing / Discounts" />
+
+        <h3>📊 Performance & Feedback Metrics</h3>
+        <input type="text" name="ratings" placeholder="Customer Ratings & Reviews" />
+        <input type="text" name="orderHistory" placeholder="Order History" />
+        <input type="text" name="onTime" placeholder="On-Time Delivery %" />
+        <input type="text" name="returnRate" placeholder="Return/Rejection Rate" />
+        <input type="text" name="disputeTime" placeholder="Dispute Resolution Time" />
+
+        <h3>📝 Compliance & Terms</h3>
+        <input type="text" name="returnPolicy" placeholder="Return Policy" />
+        <input type="text" name="shippingPolicy" placeholder="Shipping Policy" />
+        <input type="text" name="warranty" placeholder="Warranty Terms" />
+        <input type="text" name="compliance" placeholder="Compliance with Industry Regulations" />
+
+        <h3>🔐 Security & Ethics</h3>
+        <input type="text" name="privacy" placeholder="Data Privacy Policy" />
+        <input type="text" name="sustainability" placeholder="Sustainability Practices" />
+        <input type="text" name="antiFraud" placeholder="Anti-fraud Policies" />
+      </section>
+
+      <button type="submit" id="saveBtn">💾 Save</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('editForm');
+    const viewSection = document.getElementById('viewMode');
+    const profileData = document.getElementById('profileData');
+    const editBtn = document.getElementById('editBtn');
+
+    const storageKey = 'supplierProfile';
+
+    function renderProfile(data) {
+      profileData.innerHTML = `
+        <section><h3>🧾 Basic Info</h3>
+          <p><strong>Company Name:</strong> ${data.companyName || ''}</p>
+          <p><strong>Registration Number:</strong> ${data.regNumber || ''}</p>
+          <p><strong>Business Type:</strong> ${data.bizType || ''}</p>
+          <p><strong>Years in Operation:</strong> ${data.yearsOp || ''}</p>
+          <p><strong>Website:</strong> <a href="${data.website || '#'}">${data.website}</a></p>
+          <p><strong>Address:</strong> ${data.address || ''}</p>
+          <p><strong>Email:</strong> ${data.email || ''}</p>
+          <p><strong>Phone:</strong> ${data.phone || ''}</p>
+          <h3>✅ Legitimacy & Verification</h3>
+          <p><strong>Business License:</strong> ${data.license || ''}</p>
+          <p><strong>Tax ID:</strong> ${data.taxId || ''}</p>
+          <p><strong>Certifications:</strong> ${data.certifications || ''}</p>
+          <p><strong>Bank Details:</strong> ${data.bankDetails || ''}</p>
+          <p><strong>3rd Party Verifications:</strong> ${data.thirdPartyVerifications || ''}</p>
+          <h3>🏭 Operations</h3>
+          <p><strong>Capacity:</strong> ${data.capacity || ''}</p>
+          <p><strong>Warehouses:</strong> ${data.warehouses || ''}</p>
+          <p><strong>Logistics:</strong> ${data.logistics || ''}</p>
+          <p><strong>Delivery Reach:</strong> ${data.reach || ''}</p>
+          <p><strong>Areas Served:</strong> ${data.areas || ''}</p>
+          <p><strong>Avg Delivery Time:</strong> ${data.deliveryTime || ''}</p>
+          <p><strong>Fulfillment Rate:</strong> ${data.fulfillmentRate || ''}</p>
+          <h3>📦 Product Inventory</h3>
+          <p><strong>Categories:</strong> ${data.categories || ''}</p>
+          <p><strong>Top Products:</strong> ${data.topProducts || ''}</p>
+          <p><strong>MOQ:</strong> ${data.moq || ''}</p>
+          <p><strong>Stock:</strong> ${data.stock || ''}</p>
+          <p><strong>Pricing:</strong> ${data.pricing || ''}</p>
+          <h3>📊 Performance</h3>
+          <p><strong>Ratings:</strong> ${data.ratings || ''}</p>
+          <p><strong>Order History:</strong> ${data.orderHistory || ''}</p>
+          <p><strong>On-Time %:</strong> ${data.onTime || ''}</p>
+          <p><strong>Return Rate:</strong> ${data.returnRate || ''}</p>
+          <p><strong>Dispute Time:</strong> ${data.disputeTime || ''}</p>
+          <h3>📝 Compliance</h3>
+          <p><strong>Return Policy:</strong> ${data.returnPolicy || ''}</p>
+          <p><strong>Shipping Policy:</strong> ${data.shippingPolicy || ''}</p>
+          <p><strong>Warranty:</strong> ${data.warranty || ''}</p>
+          <p><strong>Compliance:</strong> ${data.compliance || ''}</p>
+          <h3>🔐 Security</h3>
+          <p><strong>Privacy:</strong> ${data.privacy || ''}</p>
+          <p><strong>Sustainability:</strong> ${data.sustainability || ''}</p>
+          <p><strong>Anti-Fraud:</strong> ${data.antiFraud || ''}</p>
+        </section>
+      `;
+    }
+
+    function loadProfile() {
+      const savedData = JSON.parse(localStorage.getItem(storageKey));
+      if (savedData) {
+        Object.keys(savedData).forEach(key => {
+          if (form[key]) form[key].value = savedData[key];
+        });
+        renderProfile(savedData);
+        form.style.display = 'none';
+        viewSection.style.display = 'block';
+      } else {
+        form.style.display = 'block';
+        viewSection.style.display = 'none';
+      }
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const data = {};
+      Array.from(form.elements).forEach(el => {
+        if (el.name) data[el.name] = el.value;
+      });
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      renderProfile(data);
+      form.style.display = 'none';
+      viewSection.style.display = 'block';
+    });
+
+    editBtn.addEventListener('click', () => {
+      form.style.display = 'block';
+      viewSection.style.display = 'none';
+    });
+
+    window.onload = loadProfile;
+  </script>
+</body>
+</html>
