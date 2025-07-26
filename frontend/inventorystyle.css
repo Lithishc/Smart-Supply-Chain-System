@@ -19,16 +19,16 @@ h1 {
   top: 0;
   z-index: 1000;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
   background: rgba(0, 64, 128, 0.45);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
   border-radius: 24px;
   margin: 30px auto 0 auto;
   width: 90%;
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
   transition: background 0.5s, box-shadow 0.5s;
   animation: fadeInDown 1s cubic-bezier(.39,.575,.565,1) both;
+  padding-right: 16px; /* Optional: space at the end */
 }
 
 @keyframes fadeInDown {
@@ -52,6 +52,7 @@ h1 {
   font-weight: 500;
   font-size: 1.05rem;
   transition: background 0.3s, color 0.3s, transform 0.2s;
+  margin-right: 8px; /* Ensures space between links */
 }
 
 .navbar a:hover {
@@ -150,4 +151,99 @@ th {
     max-width: 98%;
     padding: 18px 6px;
   }
+}
+.profile-avatar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 48px;
+}
+
+.profile-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #d1d5db;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: border 0.2s, box-shadow 0.2s, transform 0.2s;
+  padding: 2px;
+}
+
+.profile-avatar img:hover {
+  border: 2px solid #004080;
+  box-shadow: 0 4px 12px rgba(31,38,135,0.18);
+  transform: scale(1.05);
+  background: #f0f4fa;
+  cursor: pointer;
+}
+.navbar .profile-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #d1d5db;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: border 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.profile-avatar {
+  position: relative;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 48px;
+}
+
+.profile-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #d1d5db;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 2px;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.profile-avatar:hover img {
+  transform: scale(1.05);
+}
+
+.dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+  display: none;
+  flex-direction: column;
+  min-width: 160px;
+  z-index: 1001;
+}
+
+.dropdown a,
+.dropdown button {
+  padding: 10px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #003366;
+  width: 100%;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dropdown a:hover,
+.dropdown button:hover {
+  background: rgba(0, 64, 128, 0.08);
 }

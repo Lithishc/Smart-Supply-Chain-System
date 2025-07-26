@@ -5,16 +5,12 @@
   <title>Procurement Management</title>
   <link rel="stylesheet" href="inventorystyle.css">
 </head>
-<body>
+<body data-page="procurement">
   <h1>Smart Supply Chain</h1>
-  <div class="navbar">
-    <a href="index.html">Dashboard</a>
-    <a href="inventory.html">Inventory</a>
-    <a href="procurement.html" class="active">Procurement</a>
-    <a href="deals.html">Deals & Quotes</a>
-    <a href="orders.html">Orders</a>
-    <a href="profile.html">Profile</a>
-  </div>
+
+  <!-- Modular Navbar -->
+  <div id="navbar-container"></div>
+
   <div class="container">
     <h2>Procurement Requests</h2>
     <table id="procurement-table">
@@ -33,6 +29,8 @@
       </tbody>
     </table>
   </div>
+
   <script type="module" src="../backend/procurement.js"></script>
+  <script type="module" src="loadNavbar.js"></script>
 </body>
 </html>

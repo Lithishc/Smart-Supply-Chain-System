@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" data-page="index">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="inventorystyle.css" />
+</head>
+<body data-page="index">
+  <h1>Smart Supply Chain</h1>
+
+  <!-- 🔽 Placeholder for injected navbar -->
+  <div id="navbar-container"></div>
+
+  <div class="container">
+    <h2>Welcome, <span id="username">User</span> 👋</h2>
+    <p>You’re logged in. Select a tab from the navbar to manage your supply chain.</p>
+    <button id="logout-btn">Logout</button>
+  </div>
+
+  <!-- 🔽 Load navbar + auth logic -->
+  <script type="module" src="loadNavbar.js"></script>
+  <script type="module" src="dashboard.js"></script>
+  <link rel="stylesheet" href="navbar.css">
+</body>
+</html>

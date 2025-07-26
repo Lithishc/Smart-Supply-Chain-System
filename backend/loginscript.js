@@ -2,6 +2,8 @@
 import { auth } from "./firebase-config.js";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+// Import Firebase Storage for profile picture upload
 
 console.log("loginscript.js loaded");
 
@@ -9,6 +11,9 @@ console.log("loginscript.js loaded");
 const db = getFirestore();
 
 // DOM Elements
+const fileInput = document.getElementById('profile-upload');
+const profilePic = document.getElementById('profile-pic');
+const form = document.getElementById('upload-form');
 const loginForm = document.getElementById("loginForm");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -63,6 +68,48 @@ forgotPasswordLink.addEventListener("click", async (e) => {
         }
     }
 });
+fileInput.addEventListener('change', async () => {
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("You must be logged in to upload a profile picture.");
+        return;
+    }
+
+    const formData = new FormData();
+    const file = fileInput.files[0];
+    
+    if (!file) return;
+
+    // Rename file to user's UID + .jpg (or keep original name)
+    const renamedFile = new File([file], `${user.uid}.jpg`, { type: file.type });
+
+    formData.append('avatar', renamedFile);
+
+    try {
+        const res = await fetch('/upload-avatar', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.imagePath) {
+            profilePic.src = data.imagePath;
+
+            // Update Firestore with new profile image path
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, { profileImage: data.imagePath });
+
+            console.log("Profile image updated in Firestore.");
+        } else {
+            alert('Upload failed');
+        }
+    } catch (err) {
+        console.error('Error uploading image:', err);
+    }
+});
+
 
 // Redirect to Register Page
 createAccountLink.addEventListener("click", (e) => {

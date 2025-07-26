@@ -1,20 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="deals">
 <head>
   <meta charset="UTF-8">
   <title>Deals & Quotes</title>
   <link rel="stylesheet" href="inventorystyle.css">
+  <link rel="stylesheet" href="navbar.css">
+
 </head>
-<body>
+<body data-page="deals">
   <h1>Smart Supply Chain</h1>
-  <div class="navbar">
-    <a href="index.html">Dashboard</a>
-    <a href="inventory.html">Inventory</a>
-    <a href="procurement.html">Procurement</a>
-    <a href="deals.html" class="active">Deals & Quotes</a>
-    <a href="orders.html">Orders</a>
-    <a href="profile.html">Profile</a>
-  </div>
+
+  <!-- 🔽 Injects the shared navbar -->
+  <div id="navbar-container"></div>
+
   <div class="container">
     <h2>Open Procurement Requests</h2>
     <table id="supplier-table">
@@ -30,6 +28,10 @@
       </tbody>
     </table>
   </div>
+
+  <!-- 🔽 Shared navbar logic -->
+  <script type="module" src="loadNavbar.js"></script>
+  <!-- 🔽 Page-specific logic -->
   <script type="module" src="../backend/deals.js"></script>
 </body>
 </html>

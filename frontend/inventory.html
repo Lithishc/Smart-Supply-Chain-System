@@ -1,21 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="inventory">
 <head>
   <meta charset="UTF-8">
   <title>Inventory Management</title>
   <link rel="stylesheet" href="inventorystyle.css">
+  <link rel="stylesheet" href="navbar.css">
 </head>
-<body>
+<body data-page="inventory">
   <h1>Smart Supply Chain</h1>
 
-  <div class="navbar">
-    <a href="index.html">Dashboard</a>
-    <a href="inventory.html" class="active">Inventory</a>
-    <a href="procurement.html">Procurement</a>
-    <a href="deals.html">Deals & Quotes</a>
-    <a href="orders.html">Orders</a>
-    <a href="profile.html">Profile</a>
-  </div>
+  <!-- 🔽 Shared Navbar Injected Here -->
+  <div id="navbar-container"></div>
 
   <div class="container">
     <div class="heading-wrapper">
@@ -57,6 +52,10 @@
     </table>
   </div>
 
+  <!-- 🔽 Shared Navbar Loader -->
+  <script type="module" src="loadNavbar.js"></script>
+
+  <!-- 🔽 Inventory Form Script -->
   <script>
     const toggleBtn = document.getElementById('toggle-form-btn');
     const formContainer = document.getElementById('form-container');
