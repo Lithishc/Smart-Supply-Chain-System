@@ -122,6 +122,12 @@
         if (!viewSpan) return "";
         const label = viewSpan.previousElementSibling.innerText;
         const value = viewSpan.innerText;
+
+        // For uploadable fields
+        if (["license", "gst", "certs"].includes(field)) {
+          return `<label>${label}<br><input type="text" name="${field}" value="${value}" /> <input type="file" name="${field}Upload" /></label><br><br>`;
+        }
+
         return `<label>${label}<br><input type="text" name="${field}" value="${value}" /></label><br><br>`;
       }).join('') + '<button type="submit">Save</button>';
     }
@@ -140,7 +146,7 @@
       const formData = new FormData(profileForm);
       const data = {};
       for (const [key, value] of formData.entries()) {
-        data[key] = value;
+        if (!key.endsWith("Upload")) data[key] = value;
       }
       updateProfileView(data);
       profileForm.classList.add("hidden");
