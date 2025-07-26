@@ -6,31 +6,36 @@
   <link rel="stylesheet" href="inventorystyle.css">
   <link rel="stylesheet" href="navbar.css">
 </head>
+<body>
+    <h1>Smart Supply Chain </h1>
+    <div class="navbar">
+  <a href="index.html">Dashboard</a>
+  <a href="inventory.html" class="active">Inventory</a>
+  <a href="procurement.html">Procurement</a>
+  <a href="deals.html">Deals & Quotes</a>
+  <a href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
 <body data-page="inventory">
   <h1>Smart Supply Chain</h1>
 
   <!-- 🔽 Shared Navbar Injected Here -->
   <div id="navbar-container"></div>
 
+   <!-- Inventory Management Section -->
   <div class="container">
-    <div class="heading-wrapper">
-      <h2>Inventory Management</h2>
-      <button id="toggle-form-btn">Add Item</button>
-    </div>
-
-    <div class="form-container" id="form-container" style="display: none;">
-      <form id="add-item-form">
-        <input type="text" id="item-ID" placeholder="Item ID" required>
-        <input type="text" id="item-name" placeholder="Item Name" required>
-        <input type="text" id="item-desc" placeholder="Description" required>
-        <input type="text" id="item-category" placeholder="Category" required>
-        <input type="number" id="item-qty" placeholder="Quantity" required>
-        <input type="text" id="item-price" placeholder="Price" required>
-        <input type="text" id="item-supplier" placeholder="Supplier" required>
-        <input type="text" id="item-location" placeholder="Location" required>
-        <button type="submit">Add Item</button>
-      </form>
-    </div>
+    <h2>Inventory Management</h2>
+    <form id="add-item-form">
+      <input type="text" id="item-ID" placeholder="Item ID" required>
+      <input type="text" id="item-name" placeholder="Item Name" required>
+      <input type="text" id="item-desc" placeholder="Description" required>
+      <input type="text" id="item-category" placeholder="Category" required>
+      <input type="number" id="item-qty" placeholder="Quantity" required>
+      <input type="text" id="item-price" placeholder="Price" required>
+      <input type="text" id="item-supplier" placeholder="Supplier" required>
+      <input type="text" id="item-location" placeholder="Location" required>
+      <button type="submit">Add Item</button>
+    </form>
 
     <table id="inventory-table">
       <thead>
@@ -47,58 +52,11 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Items will be added here dynamically -->
+        <!-- Inventory items will appear here -->
       </tbody>
     </table>
   </div>
 
-  <!-- 🔽 Shared Navbar Loader -->
-  <script type="module" src="loadNavbar.js"></script>
-
-  <!-- 🔽 Inventory Form Script -->
-  <script>
-    const toggleBtn = document.getElementById('toggle-form-btn');
-    const formContainer = document.getElementById('form-container');
-    const form = document.getElementById('add-item-form');
-    const tableBody = document.querySelector('#inventory-table tbody');
-
-    toggleBtn.addEventListener('click', () => {
-      formContainer.style.display = formContainer.style.display === 'block' ? 'none' : 'block';
-      toggleBtn.textContent = formContainer.style.display === 'block' ? 'Close' : 'Add Item';
-    });
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const id = document.getElementById('item-ID').value.trim();
-      const name = document.getElementById('item-name').value.trim();
-      const desc = document.getElementById('item-desc').value.trim();
-      const cat = document.getElementById('item-category').value.trim();
-      const qty = document.getElementById('item-qty').value.trim();
-      const price = document.getElementById('item-price').value.trim();
-      const supplier = document.getElementById('item-supplier').value.trim();
-      const location = document.getElementById('item-location').value.trim();
-
-      if (!id || !name || !desc || !cat || !qty || !price || !supplier || !location) return;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${id}</td>
-        <td>${name}</td>
-        <td>${desc}</td>
-        <td>${cat}</td>
-        <td>${qty}</td>
-        <td>${price}</td>
-        <td>${supplier}</td>
-        <td>${location}</td>
-        <td><button onclick="this.closest('tr').remove()">Delete</button></td>
-      `;
-
-      tableBody.appendChild(row);
-      form.reset();
-      formContainer.style.display = 'none';
-      toggleBtn.textContent = 'Add Item';
-    });
-  </script>
+  <script type="module" src="../backend/inventory.js"></script>
 </body>
 </html>
