@@ -1,5 +1,5 @@
 import { db } from "./firebase-config.js";
-import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const auth = getAuth();
@@ -39,10 +39,27 @@ window.sendOffer = async (e, reqId) => {
   const price = form.price.value;
   const details = form.details.value;
 
+  // Create offer object
+  const offerData = {
+    supplierName,
+    price,
+    details,
+    supplierUid,
+    requestId: reqId,
+    createdAt: new Date()
+  };
+
+  // Add to offers collection and get offerId
+  const offerRef = await addDoc(collection(db, "offers"), offerData);
+  const offerId = offerRef.id;
+
+  // Add offerId to offerData
+  offerData.offerId = offerId;
+
   // Update global procurementRequests
   const reqRef = doc(db, "procurementRequests", reqId);
   await updateDoc(reqRef, {
-    supplierResponses: arrayUnion({ supplierName, price, details, supplierUid })
+    supplierResponses: arrayUnion(offerData)
   });
 
   // Also update the user's procurementRequests
@@ -50,7 +67,6 @@ window.sendOffer = async (e, reqId) => {
   if (reqSnap.exists()) {
     const reqData = reqSnap.data();
     const userUid = reqData.userUid;
-    // Find the user's request with same itemID and status open
     const userReqQuery = query(
       collection(db, "users", userUid, "procurementRequests"),
       where("itemID", "==", reqData.itemID),
@@ -59,7 +75,7 @@ window.sendOffer = async (e, reqId) => {
     const userReqSnap = await getDocs(userReqQuery);
     for (const userDoc of userReqSnap.docs) {
       await updateDoc(doc(db, "users", userUid, "procurementRequests", userDoc.id), {
-        supplierResponses: arrayUnion({ supplierName, price, details, supplierUid })
+        supplierResponses: arrayUnion(offerData)
       });
     }
   }

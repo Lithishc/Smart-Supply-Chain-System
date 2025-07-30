@@ -189,7 +189,7 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     });
   }
 
-  // Add order for dealer
+  // Add order for dealer (include offerId)
   await addDoc(collection(db, "users", uid, "orders"), {
     itemID: reqData.itemID,
     itemName: reqData.itemName,
@@ -199,10 +199,11 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     details: acceptedOffer.details,
     status: "ordered",
     createdAt: new Date(),
-    procurementId: requestId // <-- Add this line!
+    procurementId: requestId,
+    offerId: acceptedOffer.offerId // <-- Add this line!
   });
 
-  // Add order for supplier (if supplierUid is present)
+  // Add order for supplier (if supplierUid is present, include offerId)
   if (acceptedOffer.supplierUid) {
     await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orders"), {
       itemID: reqData.itemID,
@@ -212,7 +213,8 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
       price: acceptedOffer.price,
       details: acceptedOffer.details,
       status: "allocated",
-      createdAt: new Date()
+      createdAt: new Date(),
+      offerId: acceptedOffer.offerId // <-- Add this line!
     });
   }
 
