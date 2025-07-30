@@ -7,14 +7,7 @@
 </head>
 <body>
     <h1>Smart Supply Chain </h1>
-    <div class="navbar">
-  <a href="index.html">Dashboard</a>
-  <a href="inventory.html" class="active">Inventory</a>
-  <a href="procurement.html">Procurement</a>
-  <a href="deals.html">Deals & Quotes</a>
-  <a href="orders.html">Orders</a>
-  <a href="profile.html">Profile</a>
-</div>
+    <div id="navbar-placeholder"></div>
 
    <!-- Inventory Management Section -->
   <div class="container">
@@ -52,5 +45,12 @@
   </div>
 
   <script type="module" src="../backend/inventory.js"></script>
+   <script>
+  fetch('navbar.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('navbar-placeholder').innerHTML = data;
+    });
+  </script>
 </body>
 </html>

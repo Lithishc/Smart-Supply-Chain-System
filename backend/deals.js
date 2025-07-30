@@ -39,6 +39,14 @@ window.sendOffer = async (e, reqId) => {
   const price = form.price.value;
   const details = form.details.value;
 
+  // Get supplierUid at the time of offer
+  const auth = getAuth();
+  const supplierUid = auth.currentUser ? auth.currentUser.uid : null;
+  if (!supplierUid) {
+    alert("You must be logged in as a supplier to send an offer.");
+    return;
+  }
+
   // Create offer object
   const offerData = {
     supplierName,
@@ -46,14 +54,13 @@ window.sendOffer = async (e, reqId) => {
     details,
     supplierUid,
     requestId: reqId,
-    createdAt: new Date()
+    createdAt: new Date(),
+    status: "pending" // Track status for supplier
   };
 
-  // Add to offers collection and get offerId
-  const offerRef = await addDoc(collection(db, "offers"), offerData);
+  // Store offer in supplier's own offers subcollection and get offerId
+  const offerRef = await addDoc(collection(db, "users", supplierUid, "offers"), offerData);
   const offerId = offerRef.id;
-
-  // Add offerId to offerData
   offerData.offerId = offerId;
 
   // Update global procurementRequests

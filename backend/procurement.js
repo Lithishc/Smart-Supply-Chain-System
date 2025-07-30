@@ -36,17 +36,9 @@ async function loadInventoryForProcurement(uid) {
       where("itemID", "==", item.itemID)
     );
     const reqSnap = await getDocs(reqQuery);
-    let lastRequest = null;
     reqSnap.forEach(docRef => {
       const data = docRef.data();
-      if (!lastRequest || (data.createdAt && data.createdAt > lastRequest.createdAt)) {
-        lastRequest = data;
-        requestId = docRef.id;
-      }
-      if (data.status === "open") {
-        existingRequest = data;
-        requestId = docRef.id;
-      }
+      // Show all requests, including fulfilled/closed ones
     });
 
     // --- AUTOMATION: Create request if needed ---
@@ -64,9 +56,9 @@ async function loadInventoryForProcurement(uid) {
         supplierResponses: [],
         userUid: uid,
         createdAt: new Date(),
-        fulfilled: false // Track if order is fulfilled
+        fulfilled: false
       };
-      // Add to user's procurementRequests
+      // Add to user's procurementRequests (creates a new doc, does not overwrite)
       const userReqRef = await addDoc(collection(db, "users", uid, "procurementRequests"), requestData);
       await updateDoc(userReqRef, { requestId: userReqRef.id }); // Store the doc ID
 
