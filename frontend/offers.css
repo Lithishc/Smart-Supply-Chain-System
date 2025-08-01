@@ -1,0 +1,54 @@
+#offers-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  background: #f8fbff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px 0 rgba(31,38,135,0.08);
+}
+
+#offers-table th, #offers-table td {
+  padding: 14px 18px;
+  text-align: center;
+  border-bottom: 1px solid #e0e7ff;
+}
+
+#offers-table th {
+  background: #e0e7ff;
+  color: #003366;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+#offers-table tr:last-child td {
+  border-bottom: none;
+}
+
+.offer-status {
+  padding: 6px 16px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.offer-status.pending {
+  background: #fffbe6;
+  color: #bfa100;
+}
+
+.offer-status.accepted {
+  background: #e6ffed;
+  color: #1a7f37;
+}
+
+.offer-status.rejected {
+  background: #ffeaea;
+  color: #d32f2f;
+}
+
+.offer-status.fulfilled {
+  background: #e0f7fa;
+  color: #00796b;
+}

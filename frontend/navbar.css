@@ -88,12 +88,13 @@
   background: none;
   border: none;
   font-size: 1rem;
-  border-radius: 0;
+  border-radius: 16px;
   transition: background 0.2s, color 0.2s;
 }
 
 .dropdown-content a:hover {
   background-color: #e0e7ff;
+  border-radius: 18px;
   color: #004080;
 }
 
