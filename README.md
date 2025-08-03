@@ -1,46 +1,80 @@
-# 🏀 Sports Buddy Application
+# 🚀 Smart Supply Chain System (In Development)
 
-**Sports Buddy** is a community-focused web app that helps users find, join, and manage local sports events based on their interests and skill levels. It connects sports enthusiasts and encourages social interaction through organized activities.
+A modern, web-based **Smart Supply Chain Management System** designed to automate inventory tracking, procurement, and supplier-dealer interactions — with planned integration of blockchain for transparency and traceability.
 
+> 🎓 **Final Year B.E. Project (2025)**  
+> Developed as part of the Bachelor of Engineering (B.E.) curriculum for academic submission and research.
+> ⚠️ This project is currently under development. Blockchain components are yet to be added.
 
-## 🚀 Features
+---
 
-### 👤 User & Admin Functionality
-- 🔐 **Firebase Authentication**
-- 🎯 **Event Discovery & Search**
-- 🎟️ **Join/Cancel Events**
-- 📌 **Skill & Sports Matching System**
-- 📅 **My Events & Attending Sections**
-- 👥 **Participant Management**
-- ⚙️ **Admin Panel**
-  - Manage Sports Categories, Cities, Areas
+## 🔧 Features
 
-### 🧠 Smart Match
-- Personalized event recommendations based on:
-  - Skill level
-  - Interested sports
-- Users can update preferences directly
-- Updated values are saved to Firestore
+### 👨‍💼 Dealer Module
+- Add, edit, and manage inventory items
+- Set **preset reorder levels** per item
+- Auto-generate procurement requests when stock falls below thresholds
+- View supplier offers and accept or reject them
+- Track order status and update inventory on fulfillment
 
+### 🤝 Supplier Module
+- View all open procurement requests from dealers
+- Submit competitive offers with pricing and details
+- Automatically receive orders upon offer acceptance
+
+### 📦 Order Management
+- Orders are auto-generated upon offer acceptance
+- Both dealers and suppliers can track their orders
+- Dealers can mark orders as fulfilled and update stock levels
+
+---
 
 ## 🧱 Tech Stack
 
-| Layer       | Technology       |
-|-------------|------------------|
-| Frontend    | HTML, CSS, JavaScript |
-| Backend     | Firebase Firestore |
-| Auth        | Firebase Authentication |
-| Hosting     | Firebase Hosting |
-| UI Style    | Glassmorphism, Responsive Design |
+| Layer       | Technology                |
+|-------------|---------------------------|
+| Frontend    | HTML, CSS, Vanilla JS     |
+| Backend     | Firebase Firestore (NoSQL)|
+| Auth        | Firebase Authentication   |
+| Hosting     | Firebase / GitHub Pages   |
+| Planned     | Blockchain (Smart Contracts) |
 
-### 🚀 How to Run the Project
-1. **Open the project** in **VS Code**.
-2. **Install the Live Server extension** (if not already installed):
-   - Go to the **Extensions** tab (or press `Ctrl+Shift+X`).
-   - Search for **"Live Server"** by *Ritwick Dey*.
-   - Click **Install**.
-3. Navigate to the `index.html` file.
-4. Right-click on file and select **"Open with Live Server"**.
-5. The project will open in your default web browser.
-### OR
-Open Link: **https://lithishc.github.io/Sports-Buddy/**
+---
+
+## 📁 Key Pages
+
+- `inventory.html` – Manage inventory items (dealer)
+- `procurement.html` – Auto-procurement logic + offer management
+- `deals.html` – Supplier portal for sending offers
+- `orders.html` – Dealer’s order dashboard
+
+---
+
+## 🔮 Upcoming Features (Planned)
+
+- ✅ Notification system (email/SMS)
+- 🔜 **Blockchain integration** for procurement lifecycle tracking
+- 🔜 Smart contract-based offer acceptance
+- 🔜 PDF invoices and procurement reports
+
+---
+
+## 📸 Screenshots (Coming Soon)
+
+---
+
+## 🚀 Getting Started
+
+To run locally:
+
+1. Clone the repo
+   ```bash
+   git clone https://github.com/Lithishc/Smart-Supply-Chain-System.git
+
+## License
+
+This project is © 2025 Lithish C and team. All rights reserved.
+
+The code is proprietary and not open-source.  
+You are **not permitted** to reuse, distribute, or modify this project in any form.  
+For licensing inquiries, contact the author directly.
