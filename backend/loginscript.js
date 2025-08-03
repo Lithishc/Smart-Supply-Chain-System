@@ -41,7 +41,7 @@ loginForm.addEventListener("submit", async (e) => {
         }
 
         // Redirect all users to the same dashboard
-        window.location.href = "frontend/index.html";
+        window.location.href = "frontend/dashboard.html";
     } catch (error) {
         errorMessage.textContent = "Invalid email or password.";
         console.error("Login error:", error);
