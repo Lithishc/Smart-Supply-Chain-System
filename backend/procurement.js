@@ -190,6 +190,8 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
 
   // Add order for dealer (include offerId)
   await addDoc(collection(db, "users", uid, "orders"), {
+    procurementId: requestId,
+    offerId: acceptedOffer.offerId ,
     itemID: reqData.itemID,
     itemName: reqData.itemName,
     quantity: reqData.requestedQty,
@@ -197,23 +199,21 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     price: acceptedOffer.price,
     details: acceptedOffer.details,
     status: "ordered",
-    createdAt: new Date(),
-    procurementId: requestId,
-    offerId: acceptedOffer.offerId // <-- Add this line!
+    createdAt: new Date()
   });
 
   // Add order for supplier (if supplierUid is present, include offerId)
   if (acceptedOffer.supplierUid) {
     await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orders"), {
+      offerId: acceptedOffer.offerId,
       itemID: reqData.itemID,
       itemName: reqData.itemName,
       quantity: reqData.requestedQty,
       dealer: uid,
       price: acceptedOffer.price,
       details: acceptedOffer.details,
-      status: "allocated",
-      createdAt: new Date(),
-      offerId: acceptedOffer.offerId // <-- Add this line!
+      status: "accepted",
+      createdAt: new Date()
     });
   }
 

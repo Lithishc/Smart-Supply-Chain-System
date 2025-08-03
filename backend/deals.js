@@ -49,11 +49,11 @@ window.sendOffer = async (e, reqId) => {
 
   // Create offer object
   const offerData = {
+    requestId: reqId,
     supplierName,
     price,
     details,
     supplierUid,
-    requestId: reqId,
     createdAt: new Date(),
     status: "pending" // Track status for supplier
   };
