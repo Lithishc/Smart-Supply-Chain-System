@@ -2,6 +2,8 @@
 
 A modern, web-based **Smart Supply Chain Management System** designed to automate inventory tracking, procurement, and supplier-dealer interactions — with planned integration of blockchain for transparency and traceability.
 
+> 🎓 **Final Year B.E. Project (2025)**  
+> Developed as part of the Bachelor of Engineering (B.E.) curriculum for academic submission and research.
 > ⚠️ This project is currently under development. Blockchain components are yet to be added.
 
 ---
