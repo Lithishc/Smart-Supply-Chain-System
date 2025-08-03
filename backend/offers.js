@@ -30,7 +30,7 @@ async function loadOffers(uid) {
 
     // Fetch item details from global procurementRequests using requestId
     if (offer.requestId) {
-      const globalReqRef = doc(db, "procurementRequests", offer.requestId);
+      const globalReqRef = doc(db, "globalProcurementRequests", offer.requestId);
       const globalReqSnap = await getDoc(globalReqRef);
       if (globalReqSnap.exists()) {
         const globalReq = globalReqSnap.data();

@@ -54,12 +54,12 @@ window.markProcurementFulfilled = async (uid, procurementId) => {
 
   // Also mark as fulfilled in global procurementRequests collection
   const globalQuery = query(
-    collection(db, "procurementRequests"),
+    collection(db, "globalProcurementRequests"),
     where("requestId", "==", procurementId)
   );
   const globalSnap = await getDocs(globalQuery);
   for (const globalDoc of globalSnap.docs) {
-    await updateDoc(doc(db, "procurementRequests", globalDoc.id), { fulfilled: true });
+    await updateDoc(doc(db, "globalProcurementRequests", globalDoc.id), { fulfilled: true });
   }
 
   alert("Procurement marked as fulfilled. Please update your inventory quantity.");

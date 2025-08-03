@@ -70,7 +70,7 @@ async function loadInventoryForProcurement(uid) {
       await updateDoc(userReqRef, { requestId: userReqRef.id }); // Store the doc ID
 
       // Add to global procurementRequests for suppliers
-      const globalReqRef = await addDoc(collection(db, "procurementRequests"), {
+      const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), {
         ...requestData,
         requestId: userReqRef.id // Link global to user request
       });
@@ -174,14 +174,14 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     accepted: true
   });
   const globalReqQuery = query(
-    collection(db, "procurementRequests"),
+    collection(db, "globalProcurementRequests"),
     where("itemID", "==", reqData.itemID),
     where("userUid", "==", uid),
     where("status", "==", "open")
   );
   const globalSnap = await getDocs(globalReqQuery);
   for (const docRef of globalSnap.docs) {
-    await updateDoc(doc(db, "procurementRequests", docRef.id), {
+    await updateDoc(doc(db, "globalProcurementRequests", docRef.id), {
       status: "ordered",
       acceptedOffer,
       accepted: true
@@ -234,7 +234,7 @@ window.rejectOffer = async (uid, requestId, offerIdx) => {
 
   // Also update global procurementRequests
   const globalReqQuery = query(
-    collection(db, "procurementRequests"),
+    collection(db, "globalProcurementRequests"),
     where("itemID", "==", reqData.itemID),
     where("userUid", "==", uid),
     where("status", "==", "open")
@@ -242,7 +242,7 @@ window.rejectOffer = async (uid, requestId, offerIdx) => {
   const globalSnap = await getDocs(globalReqQuery);
   for (const docRef of globalSnap.docs) {
     // Get the global doc's supplierResponses, remove the same offer, and update
-    const globalDocRef = doc(db, "procurementRequests", docRef.id);
+    const globalDocRef = doc(db, "globalProcurementRequests", docRef.id);
     const globalDocSnap = await getDoc(globalDocRef);
     if (globalDocSnap.exists()) {
       const globalData = globalDocSnap.data();

@@ -9,7 +9,7 @@ const tableBody = document.querySelector('#supplier-table tbody');
 
 async function loadOpenRequests() {
   tableBody.innerHTML = "";
-  const reqSnap = await getDocs(collection(db, "procurementRequests"));
+  const reqSnap = await getDocs(collection(db, "globalProcurementRequests"));
   reqSnap.forEach((docSnap) => {
     const req = docSnap.data();
     if (req.status === "open") {
@@ -64,7 +64,7 @@ window.sendOffer = async (e, reqId) => {
   offerData.offerId = offerId;
 
   // Update global procurementRequests
-  const reqRef = doc(db, "procurementRequests", reqId);
+  const reqRef = doc(db, "globalProcurementRequests", reqId);
   await updateDoc(reqRef, {
     supplierResponses: arrayUnion(offerData)
   });
