@@ -98,7 +98,7 @@ window.markProcurementFulfilled = async (uid, globalProcurementId) => {
     await updateDoc(doc(db, "users", uid, "orders", orderDoc.id), { status: "fulfilled" });
   }
 
-  alert("Procurement marked as fulfilled. Please update your inventory quantity.");
+  alert("Procurement marked as fulfilled and updated inventory successfully.");
 
   // Optionally reload orders table to reflect changes
   loadOrders(uid);
