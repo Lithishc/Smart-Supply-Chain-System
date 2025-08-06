@@ -23,12 +23,12 @@ async function loadOrders(uid) {
   ordersSnap.forEach((docSnap) => {
     const order = docSnap.data();
     const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
-    let procurementId = order.procurementId || (order.acceptedOffer && order.acceptedOffer.procurementId) || null;
+    let globalProcurementId = order.globalProcurementId || (order.acceptedOffer && order.acceptedOffer.globalProcurementId) || null;
 
     // Build status cell with button if eligible
     let statusCell = order.status;
-    if (order.status === "ordered" && procurementId) {
-      statusCell += ` <button onclick="window.markProcurementFulfilled('${uid}', '${procurementId}')"
+    if (order.status === "ordered" && globalProcurementId) {
+      statusCell += ` <button onclick="window.markProcurementFulfilled('${uid}', '${globalProcurementId}')"
         style="margin-left:8px;">Mark as Fulfilled & Update Inventory</button>`;
     }
 
@@ -47,15 +47,15 @@ async function loadOrders(uid) {
   });
 }
 
-window.markProcurementFulfilled = async (uid, procurementId) => {
+window.markProcurementFulfilled = async (uid, globalProcurementId) => {
   // Mark procurement request as fulfilled in user's collection
-  const procurementRef = doc(db, "users", uid, "procurementRequests", procurementId);
+  const procurementRef = doc(db, "users", uid, "procurementRequests", globalProcurementId);
   await updateDoc(procurementRef, { fulfilled: true });
 
   // Also mark as fulfilled in global procurementRequests collection
   const globalQuery = query(
     collection(db, "globalProcurementRequests"),
-    where("requestId", "==", procurementId)
+    where("globalProcurementId", "==", globalProcurementId)
   );
   const globalSnap = await getDocs(globalQuery);
   for (const globalDoc of globalSnap.docs) {
@@ -82,7 +82,7 @@ window.markProcurementFulfilled = async (uid, procurementId) => {
   // Mark the order status as fulfilled
   const ordersQuery = query(
     collection(db, "users", uid, "orders"),
-    where("procurementId", "==", procurementId)
+    where("globalProcurementId", "==", globalProcurementId)
   );
   const ordersSnap = await getDocs(ordersQuery);
   for (const orderDoc of ordersSnap.docs) {
