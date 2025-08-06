@@ -199,7 +199,7 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     procurementId: userRequestId,
     globalProcurementId,
     offerId: acceptedOffer.offerId,
-    itemID: reqData.itemID,
+    orderID: reqData.itemID,
     itemName: reqData.itemName,
     quantity: reqData.requestedQty,
     supplier: acceptedOffer.supplierName,
@@ -223,6 +223,12 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
       status: "accepted",
       createdAt: new Date()
     });
+  }
+
+  // Update supplier's offer status in their offers collection
+  if (acceptedOffer.supplierUid && acceptedOffer.offerId) {
+    const supplierOfferRef = doc(db, "users", acceptedOffer.supplierUid, "offers", acceptedOffer.offerId);
+    await updateDoc(supplierOfferRef, { status: "accepted" });
   }
 
   alert("Offer accepted and order created!");
@@ -249,6 +255,13 @@ window.rejectOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     const userOffers = Array.isArray(userData.supplierResponses) ? [...userData.supplierResponses] : [];
     userOffers[offerIdx] = { ...userOffers[offerIdx], status: "rejected" };
     await updateDoc(userReqRef, { supplierResponses: userOffers });
+  }
+
+  // Also update the supplier's offer status in their offers collection
+  const globalOffer = offers[offerIdx];
+  if (globalOffer.supplierUid && globalOffer.offerId) {
+    const supplierOfferRef = doc(db, "users", globalOffer.supplierUid, "offers", globalOffer.offerId);
+    await updateDoc(supplierOfferRef, { status: "rejected" });
   }
 
   alert("Offer rejected.");

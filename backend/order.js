@@ -48,9 +48,35 @@ async function loadOrders(uid) {
 }
 
 window.markProcurementFulfilled = async (uid, globalProcurementId) => {
-  // Mark procurement request as fulfilled in user's collection
-  const procurementRef = doc(db, "users", uid, "procurementRequests", globalProcurementId);
-  await updateDoc(procurementRef, { fulfilled: true });
+  // Find the user's procurementRequest doc by globalProcurementId
+  const userReqQuery = query(
+    collection(db, "users", uid, "procurementRequests"),
+    where("globalProcurementId", "==", globalProcurementId)
+  );
+  const userReqSnap = await getDocs(userReqQuery);
+
+  // Ensure we found a procurement request before proceeding
+  if (userReqSnap.empty) {
+    alert("No matching procurement request found for this order.");
+    return;
+  }
+
+  // Update all matching procurement requests (should only be one)
+  for (const userDoc of userReqSnap.docs) {
+    await updateDoc(doc(db, "users", uid, "procurementRequests", userDoc.id), { fulfilled: true });
+
+    // Find the itemID from the procurement request
+    const itemID = userDoc.data().itemID;
+
+    const newQty = prompt("Enter new stock quantity after procurement:");
+    if (newQty && itemID) {
+      const inventoryQuery = query(collection(db, "users", uid, "inventory"), where("itemID", "==", itemID));
+      const invSnap = await getDocs(inventoryQuery);
+      for (const docRef of invSnap.docs) {
+        await updateDoc(doc(db, "users", uid, "inventory", docRef.id), { quantity: Number(newQty) });
+      }
+    }
+  }
 
   // Also mark as fulfilled in global procurementRequests collection
   const globalQuery = query(
@@ -62,23 +88,6 @@ window.markProcurementFulfilled = async (uid, globalProcurementId) => {
     await updateDoc(doc(db, "globalProcurementRequests", globalDoc.id), { fulfilled: true });
   }
 
-  alert("Procurement marked as fulfilled. Please update your inventory quantity.");
-
-  // Find the itemID from the procurement request
-  const procurementSnap = await getDoc(procurementRef);
-  let itemID = null;
-  if (procurementSnap.exists()) {
-    itemID = procurementSnap.data().itemID;
-  }
-  const newQty = prompt("Enter new stock quantity after procurement:");
-  if (newQty && itemID) {
-    const inventoryQuery = query(collection(db, "users", uid, "inventory"), where("itemID", "==", itemID));
-    const invSnap = await getDocs(inventoryQuery);
-    for (const docRef of invSnap.docs) {
-      await updateDoc(doc(db, "users", uid, "inventory", docRef.id), { quantity: Number(newQty) });
-    }
-  }
-
   // Mark the order status as fulfilled
   const ordersQuery = query(
     collection(db, "users", uid, "orders"),
@@ -88,6 +97,8 @@ window.markProcurementFulfilled = async (uid, globalProcurementId) => {
   for (const orderDoc of ordersSnap.docs) {
     await updateDoc(doc(db, "users", uid, "orders", orderDoc.id), { status: "fulfilled" });
   }
+
+  alert("Procurement marked as fulfilled. Please update your inventory quantity.");
 
   // Optionally reload orders table to reflect changes
   loadOrders(uid);
