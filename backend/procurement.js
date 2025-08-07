@@ -116,7 +116,7 @@ async function loadInventoryForProcurement(uid) {
   }
 }
 
-// Modal or section to show offers
+// popup or section to show offers
 window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
   // Always use global request for offers
   const reqRef = doc(db, "globalProcurementRequests", globalProcurementId);
@@ -139,25 +139,25 @@ window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
       `;
     });
   }
-  // Show in a modal or a div (for demo, use alert or a simple div)
-  let modal = document.getElementById('offers-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'offers-modal';
-    modal.style.position = 'fixed';
-    modal.style.top = '50%';
-    modal.style.left = '50%';
-    modal.style.transform = 'translate(-50%, -50%)';
-    modal.style.background = '#fff';
-    modal.style.padding = '24px';
-    modal.style.borderRadius = '16px';
-    modal.style.boxShadow = '0 8px 32px 0 rgba(31,38,135,0.18)';
-    modal.style.zIndex = '9999';
-    modal.innerHTML = `<button onclick="document.body.removeChild(this.parentNode)">Close</button><div id="offers-content"></div>`;
-    document.body.appendChild(modal);
+  // Show in a popup or a div (for demo, use alert or a simple div)
+  let popup = document.getElementById('offers-popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'offers-popup';
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.background = '#fff';
+    popup.style.padding = '24px';
+    popup.style.borderRadius = '16px';
+    popup.style.boxShadow = '0 8px 32px 0 rgba(31,38,135,0.18)';
+    popup.style.zIndex = '9999';
+    popup.innerHTML = `<button onclick="document.body.removeChild(this.parentNode)">Close</button><div id="offers-content"></div>`;
+    document.body.appendChild(popup);
   }
-  modal.querySelector('#offers-content').innerHTML = html;
-  modal.style.display = 'block';
+  popup.querySelector('#offers-content').innerHTML = html;
+  popup.style.display = 'block';
 };
 
 
@@ -232,7 +232,7 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
   }
 
   alert("Offer accepted and order created!");
-  document.getElementById('offers-modal').remove();
+  document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };
 
@@ -265,7 +265,7 @@ window.rejectOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
   }
 
   alert("Offer rejected.");
-  document.getElementById('offers-modal').remove();
+  document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };
 

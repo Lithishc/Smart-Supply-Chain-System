@@ -16,12 +16,7 @@ h1 {
 
 .container {
   padding: 32px 28px;
-  max-width: 900px;
-  margin: 40px auto;
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 28px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   animation: fadeIn 1.2s cubic-bezier(.39,.575,.565,1) both;
   transition: box-shadow 0.4s, background 0.4s;
 }

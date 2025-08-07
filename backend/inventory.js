@@ -1,14 +1,29 @@
 // Import Firebase modules from your config and Firestore functions from CDN
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // DOM Elements
-const form = document.getElementById('add-item-form');
+const popup = document.getElementById('fluid-popup');
+const form = document.getElementById('add-item-form-popup');
 const tableBody = document.querySelector('#inventory-table tbody');
-
-// Track edit state
 let editingId = null;
+
+// Show popup on add button click
+document.getElementById('show-add-popup').onclick = function() {
+  popup.style.display = 'flex';
+  form.reset();
+  editingId = null;
+  form.querySelector('button[type="submit"]').textContent = "Add Item";
+};
+
+// Hide popup on close
+document.querySelector('.close-btn').onclick = function() {
+  popup.style.display = 'none';
+  form.reset();
+  editingId = null;
+  form.querySelector('button[type="submit"]').textContent = "Add Item";
+};
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -16,7 +31,6 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "../login.html";
     return;
   }
-
   loadInventory(user.uid);
 
   form.addEventListener('submit', async (e) => {
@@ -42,6 +56,7 @@ onAuthStateChanged(auth, async (user) => {
       await addDoc(collection(db, "users", user.uid, "inventory"), item);
     }
     form.reset();
+    popup.style.display = 'none';
     loadInventory(user.uid);
   });
 });
@@ -58,8 +73,12 @@ async function loadInventory(uid) {
       <td>${item.itemName}</td>
       <td>${item.description}</td>
       <td>${item.category}</td>
-      <td>${item.quantity}</td>
-      <td>${item.price}</td>
+      <td>
+        <input type="number" class="editable-input" value="${item.quantity}" data-id="${docSnap.id}" data-field="quantity">
+      </td>
+      <td>
+        <input type="number" class="editable-input" value="${item.price}" data-id="${docSnap.id}" data-field="price">
+      </td>
       <td>${item.supplier}</td>
       <td>${item.location}</td>
       <td>
@@ -75,23 +94,20 @@ async function loadInventory(uid) {
     btn.addEventListener('click', async function() {
       const id = this.getAttribute('data-id');
       const docRef = doc(db, "users", auth.currentUser.uid, "inventory", id);
-      const docSnap = await getDocs(collection(db, "users", auth.currentUser.uid, "inventory"));
-      // Find the correct doc
-      let itemData = null;
-      docSnap.forEach(d => {
-        if (d.id === id) itemData = d.data();
-      });
-      if (itemData) {
-        document.getElementById('item-ID').value = itemData.itemID;
-        document.getElementById('item-name').value = itemData.itemName;
-        document.getElementById('item-desc').value = itemData.description;
-        document.getElementById('item-category').value = itemData.category;
-        document.getElementById('item-qty').value = itemData.quantity;
-        document.getElementById('item-price').value = itemData.price;
-        document.getElementById('item-supplier').value = itemData.supplier;
-        document.getElementById('item-location').value = itemData.location;
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const itemData = docSnap.data();
+        document.getElementById('item-ID').value = itemData.itemID || "";
+        document.getElementById('item-name').value = itemData.itemName || "";
+        document.getElementById('item-desc').value = itemData.description || "";
+        document.getElementById('item-category').value = itemData.category || "";
+        document.getElementById('item-qty').value = itemData.quantity || "";
+        document.getElementById('item-price').value = itemData.price || "";
+        document.getElementById('item-supplier').value = itemData.supplier || "";
+        document.getElementById('item-location').value = itemData.location || "";
         editingId = id;
         form.querySelector('button[type="submit"]').textContent = "Update Item";
+        popup.style.display = 'flex';
       }
     });
   });
@@ -103,6 +119,17 @@ async function loadInventory(uid) {
         await deleteDoc(doc(db, "users", auth.currentUser.uid, "inventory", id));
         loadInventory(auth.currentUser.uid);
       }
+    });
+  });
+
+  // Attach event listeners for editable quantity and price
+  document.querySelectorAll('.editable-input').forEach(input => {
+    input.addEventListener('change', async function() {
+      const id = this.getAttribute('data-id');
+      const field = this.getAttribute('data-field');
+      let value = this.value;
+      if (field === "quantity") value = Number(value);
+      await updateDoc(doc(db, "users", auth.currentUser.uid, "inventory", id), { [field]: value });
     });
   });
 }

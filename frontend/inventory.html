@@ -9,48 +9,62 @@
     <h1>Smart Supply Chain </h1>
     <div id="navbar-placeholder"></div>
 
-   <!-- Inventory Management Section -->
-  <div class="container">
-    <h2>Inventory Management</h2>
-    <form id="add-item-form">
-      <input type="text" id="item-ID" placeholder="Item ID" required>
-      <input type="text" id="item-name" placeholder="Item Name" required>
-      <input type="text" id="item-desc" placeholder="Description" required>
-      <input type="text" id="item-category" placeholder="Category" required>
-      <input type="number" id="item-qty" placeholder="Quantity" required>
-      <input type="text" id="item-price" placeholder="Price" required>
-      <input type="text" id="item-supplier" placeholder="Supplier" required>
-      <input type="text" id="item-location" placeholder="Location" required>
-      <button type="submit">Add Item</button>
-    </form>
+    <div class="container">
+      <div class="inv-header">
+        <h2>Inventory Management</h2>
+        <button class="add-btn" id="show-add-popup">Add Item</button>
+      </div>
 
-    <table id="inventory-table">
-      <thead>
-        <tr>
-          <th>Item ID</th>
-          <th>Item Name</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Quantity</th>
-          <th>Price</th>
-          <th>Supplier</th>
-          <th>Location</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Inventory items will appear here -->
-      </tbody>
-    </table>
-  </div>
+      <table id="inventory-table">
+        <thead>
+          <tr>
+            <th>Item ID</th>
+            <th>Item Name</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Supplier</th>
+            <th>Location</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Inventory items will appear here -->
+        </tbody>
+      </table>
+    </div>
 
-  <script type="module" src="../backend/inventory.js"></script>
-   <script>
-  fetch('navbar.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('navbar-placeholder').innerHTML = data;
-    });
-  </script>
+    <!-- Water Fluid Add Popup (hidden by default) -->
+    <div id="fluid-popup" class="fluid-popup-bg" style="display:none;">
+      <div class="fluid-popup-content">
+        <button class="close-btn" onclick="document.getElementById('fluid-popup').style.display='none'">&times;</button>
+        <form id="add-item-form-popup">
+          <input type="text" id="item-ID" placeholder="Item ID" required>
+          <input type="text" id="item-name" placeholder="Item Name" required>
+          <input type="text" id="item-desc" placeholder="Description" required>
+          <input type="text" id="item-category" placeholder="Category" required>
+          <input type="number" id="item-qty" placeholder="Quantity" required>
+          <input type="text" id="item-price" placeholder="Price" required>
+          <input type="text" id="item-supplier" placeholder="Supplier" required>
+          <input type="text" id="item-location" placeholder="Location" required>
+          <button type="submit" class="add-btn" style="margin-top:10px;">Add Item</button>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="../backend/inventory.js"></script>
+    <script>
+      fetch('navbar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('navbar-placeholder').innerHTML = data;
+        });
+
+      // Show popup on add button click
+      document.getElementById('show-add-popup').onclick = function() {
+        document.getElementById('fluid-popup').style.display = 'flex';
+      };
+    </script>
 </body>
 </html>

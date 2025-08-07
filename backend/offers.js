@@ -136,23 +136,23 @@ window.UpdateTracking = async (uid, orderId, globalProcurementId) => {
           `).join("")}
         </tbody>
       </table>
-      <button onclick="document.getElementById('order-tracking-modal').remove()">Close</button>
+      <button onclick="document.getElementById('order-tracking-popup').remove()">Close</button>
     </div>
   `;
 
-  let modal = document.createElement('div');
-  modal.id = 'order-tracking-modal';
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.background = 'rgba(0,0,0,0.25)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.innerHTML = html;
-  document.body.appendChild(modal);
+  let popup = document.createElement('div');
+  popup.id = 'order-tracking-popup';
+  popup.style.position = 'fixed';
+  popup.style.top = '0';
+  popup.style.left = '0';
+  popup.style.width = '100vw';
+  popup.style.height = '100vh';
+  popup.style.background = 'rgba(0,0,0,0.25)';
+  popup.style.display = 'flex';
+  popup.style.alignItems = 'center';
+  popup.style.justifyContent = 'center';
+  popup.innerHTML = html;
+  document.body.appendChild(popup);
 
   // Add event listener for status update
   document.getElementById('update-status-btn').onclick = async () => {
@@ -195,7 +195,7 @@ window.UpdateTracking = async (uid, orderId, globalProcurementId) => {
     }
 
     alert("Order status updated!");
-    document.getElementById('order-tracking-modal').remove();
+    document.getElementById('order-tracking-popup').remove();
     loadOffers(uid);
   };
 };
