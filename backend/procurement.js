@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, getDocs, doc, updateDoc, addDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, addDoc, query, where, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const tableBody = document.querySelector('#procurement-table tbody');
 
@@ -38,12 +38,14 @@ async function loadInventoryForProcurement(uid) {
     const reqSnap = await getDocs(reqQuery);
 
     let lastRequest = null;
+    let lastglobalProcurementId = null;
     reqSnap.forEach(docRef => {
       const data = docRef.data();
       // Find the latest request (by createdAt)
       if (!lastRequest || (data.createdAt && data.createdAt > lastRequest.createdAt)) {
         lastRequest = data;
         requestId = docRef.id;
+        lastglobalProcurementId = data.globalProcurementId;
         existingRequest = data.status === "open" ? data : existingRequest;
       }
     });
@@ -65,22 +67,22 @@ async function loadInventoryForProcurement(uid) {
         createdAt: new Date(),
         fulfilled: false // Track if order is fulfilled
       };
-      // Add to user's procurementRequests
-      const userReqRef = await addDoc(collection(db, "users", uid, "procurementRequests"), requestData);
-      await updateDoc(userReqRef, { requestId: userReqRef.id }); // Store the doc ID
-
       // Add to global procurementRequests for suppliers
-      const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), {
+      const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), requestData);
+      await updateDoc(globalReqRef, { globalProcurementId: globalReqRef.id });
+
+      // Add to user's procurementRequests, store globalProcurementId
+      const userReqRef = await addDoc(collection(db, "users", uid, "procurementRequests"), {
         ...requestData,
-        requestId: userReqRef.id // Link global to user request
+        globalProcurementId: globalReqRef.id
       });
-      await updateDoc(globalReqRef, { globalRequestId: globalReqRef.id });
+      await updateDoc(userReqRef, { requestId: userReqRef.id }); // Optionally keep for legacy
     }
 
     if (existingRequest && Array.isArray(existingRequest.supplierResponses) && existingRequest.supplierResponses.length > 0) {
       offerCount = existingRequest.supplierResponses.length;
       offersHtml = `
-        <button onclick="window.viewOffers('${uid}','${requestId}')">
+        <button onclick="window.viewOffers('${uid}','${lastglobalProcurementId}','${requestId}')">
           View Offers (${offerCount})
         </button>
       `;
@@ -115,8 +117,9 @@ async function loadInventoryForProcurement(uid) {
 }
 
 // Modal or section to show offers
-window.viewOffers = async (uid, requestId) => {
-  const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
+window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
+  // Always use global request for offers
+  const reqRef = doc(db, "globalProcurementRequests", globalProcurementId);
   const reqSnap = await getDoc(reqRef);
   if (!reqSnap.exists()) return;
   const reqData = reqSnap.data();
@@ -130,8 +133,8 @@ window.viewOffers = async (uid, requestId) => {
         <div style="border-bottom:1px solid #eee; margin-bottom:10px; padding-bottom:8px;">
           <b>${offer.supplierName}</b>: ₹${offer.price}<br>
           <span>${offer.details}</span><br>
-          <button onclick="window.acceptOffer('${uid}','${requestId}',${idx})">Accept</button>
-          <button onclick="window.rejectOffer('${uid}','${requestId}',${idx})">Reject</button>
+          <button onclick="window.acceptOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Accept</button>
+          <button onclick="window.rejectOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Reject</button>
         </div>
       `;
     });
@@ -159,40 +162,44 @@ window.viewOffers = async (uid, requestId) => {
 
 
 // Accept supplier offer and create order for both dealer and supplier
-window.acceptOffer = async (uid, requestId, offerIdx) => {
-  // Get the accepted offer
-  const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
-  const reqSnap = await getDoc(reqRef);
-  if (!reqSnap.exists()) return;
-  const reqData = reqSnap.data();
-  const acceptedOffer = reqData.supplierResponses[offerIdx];
+window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) => {
+  // Get the accepted offer from global
+  const globalReqRef = doc(db, "globalProcurementRequests", globalProcurementId);
+  const globalReqSnap = await getDoc(globalReqRef);
+  if (!globalReqSnap.exists()) return;
+  const reqData = globalReqSnap.data();
+  const offers = reqData.supplierResponses || [];
+  
+  // Update offer statuses
+  const updatedOffers = offers.map((offer, idx) => ({
+    ...offer,
+    status: idx === offerIdx ? "accepted" : "rejected"
+  }));
+  const acceptedOffer = updatedOffers[offerIdx];
 
-  // Update status in both user and global requests
-  await updateDoc(reqRef, {
+  // Update status in global request
+  await updateDoc(globalReqRef, {
     status: "ordered",
     acceptedOffer,
-    accepted: true
+    accepted: true,
+    supplierResponses: updatedOffers
   });
-  const globalReqQuery = query(
-    collection(db, "globalProcurementRequests"),
-    where("itemID", "==", reqData.itemID),
-    where("userUid", "==", uid),
-    where("status", "==", "open")
-  );
-  const globalSnap = await getDocs(globalReqQuery);
-  for (const docRef of globalSnap.docs) {
-    await updateDoc(doc(db, "globalProcurementRequests", docRef.id), {
-      status: "ordered",
-      acceptedOffer,
-      accepted: true
-    });
-  }
+
+  // Update user's procurementRequests
+  const userReqRef = doc(db, "users", uid, "procurementRequests", userRequestId);
+  await updateDoc(userReqRef, {
+    status: "ordered",
+    acceptedOffer,
+    accepted: true,
+    supplierResponses: updatedOffers
+  });
 
   // Add order for dealer (include offerId)
   await addDoc(collection(db, "users", uid, "orders"), {
-    procurementId: requestId,
-    offerId: acceptedOffer.offerId ,
-    itemID: reqData.itemID,
+    procurementId: userRequestId,
+    globalProcurementId,
+    offerId: acceptedOffer.offerId,
+    orderID: reqData.itemID,
     itemName: reqData.itemName,
     quantity: reqData.requestedQty,
     supplier: acceptedOffer.supplierName,
@@ -205,6 +212,7 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
   // Add order for supplier (if supplierUid is present, include offerId)
   if (acceptedOffer.supplierUid) {
     await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orders"), {
+      globalProcurementId,
       offerId: acceptedOffer.offerId,
       itemID: reqData.itemID,
       itemName: reqData.itemName,
@@ -217,38 +225,43 @@ window.acceptOffer = async (uid, requestId, offerIdx) => {
     });
   }
 
+  // Update supplier's offer status in their offers collection
+  if (acceptedOffer.supplierUid && acceptedOffer.offerId) {
+    const supplierOfferRef = doc(db, "users", acceptedOffer.supplierUid, "offers", acceptedOffer.offerId);
+    await updateDoc(supplierOfferRef, { status: "accepted" });
+  }
+
   alert("Offer accepted and order created!");
   document.getElementById('offers-modal').remove();
   loadInventoryForProcurement(uid);
 };
 
 // Reject supplier offer
-window.rejectOffer = async (uid, requestId, offerIdx) => {
-  // Update user's procurementRequests
-  const reqRef = doc(db, "users", uid, "procurementRequests", requestId);
-  const reqSnap = await getDoc(reqRef);
-  if (!reqSnap.exists()) return;
-  const reqData = reqSnap.data();
-  reqData.supplierResponses.splice(offerIdx, 1);
-  await updateDoc(reqRef, { supplierResponses: reqData.supplierResponses });
+window.rejectOffer = async (uid, globalProcurementId, userRequestId, offerIdx) => {
+  // Update global procurementRequests
+  const globalReqRef = doc(db, "globalProcurementRequests", globalProcurementId);
+  const globalReqSnap = await getDoc(globalReqRef);
+  if (!globalReqSnap.exists()) return;
+  const globalData = globalReqSnap.data();
+  const offers = globalData.supplierResponses || [];
+  offers[offerIdx] = { ...offers[offerIdx], status: "rejected" };
+  await updateDoc(globalReqRef, { supplierResponses: offers });
 
-  // Also update global procurementRequests
-  const globalReqQuery = query(
-    collection(db, "globalProcurementRequests"),
-    where("itemID", "==", reqData.itemID),
-    where("userUid", "==", uid),
-    where("status", "==", "open")
-  );
-  const globalSnap = await getDocs(globalReqQuery);
-  for (const docRef of globalSnap.docs) {
-    // Get the global doc's supplierResponses, remove the same offer, and update
-    const globalDocRef = doc(db, "globalProcurementRequests", docRef.id);
-    const globalDocSnap = await getDoc(globalDocRef);
-    if (globalDocSnap.exists()) {
-      const globalData = globalDocSnap.data();
-      globalData.supplierResponses.splice(offerIdx, 1);
-      await updateDoc(globalDocRef, { supplierResponses: globalData.supplierResponses });
-    }
+  // Also update the user's procurementRequests
+  const userReqRef = doc(db, "users", uid, "procurementRequests", userRequestId);
+  const userReqSnap = await getDoc(userReqRef);
+  if (userReqSnap.exists()) {
+    const userData = userReqSnap.data();
+    const userOffers = Array.isArray(userData.supplierResponses) ? [...userData.supplierResponses] : [];
+    userOffers[offerIdx] = { ...userOffers[offerIdx], status: "rejected" };
+    await updateDoc(userReqRef, { supplierResponses: userOffers });
+  }
+
+  // Also update the supplier's offer status in their offers collection
+  const globalOffer = offers[offerIdx];
+  if (globalOffer.supplierUid && globalOffer.offerId) {
+    const supplierOfferRef = doc(db, "users", globalOffer.supplierUid, "offers", globalOffer.offerId);
+    await updateDoc(supplierOfferRef, { status: "rejected" });
   }
 
   alert("Offer rejected.");

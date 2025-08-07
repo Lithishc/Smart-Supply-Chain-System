@@ -49,7 +49,7 @@ window.sendOffer = async (e, reqId) => {
 
   // Create offer object
   const offerData = {
-    requestId: reqId,
+    globalProcurementId: reqId, // <-- use this for reference
     supplierName,
     price,
     details,
@@ -74,9 +74,12 @@ window.sendOffer = async (e, reqId) => {
   if (reqSnap.exists()) {
     const reqData = reqSnap.data();
     const userUid = reqData.userUid;
+    const globalProcurementId = reqSnap.id; // This is the global doc's id
+
+    // Find the user's procurement request by globalProcurementId
     const userReqQuery = query(
       collection(db, "users", userUid, "procurementRequests"),
-      where("itemID", "==", reqData.itemID),
+      where("globalProcurementId", "==", globalProcurementId),
       where("status", "==", "open")
     );
     const userReqSnap = await getDocs(userReqQuery);
