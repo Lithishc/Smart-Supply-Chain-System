@@ -115,9 +115,10 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
   // Fetch tracking history (array of {status, date, location, note})
   let tracking = order.tracking || [];
 
-  // Build tracking UI (removed update status section)
+  // Build tracking UI (no inline CSS, use classes and structure for CSS file)
   let html = `
-    <div style="padding:24px;max-width:600px;background:#fff;border-radius:18px;box-shadow:0 4px 24px #0001;">
+    <div>
+      <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
       <h2>Order Tracking</h2>
       <div style="margin-bottom:16px;">
         <b>Order ID:</b> ${orderId}<br>
@@ -125,7 +126,7 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
         <b>Current Status:</b> ${order.status}
       </div>
       <h3>Updates:</h3>
-      <table style="width:100%;margin-bottom:12px;">
+      <table>
         <thead>
           <tr><th>Date</th><th>Status</th><th>Note</th></tr>
         </thead>
@@ -139,23 +140,11 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
           `).join("")}
         </tbody>
       </table>
-      <button onclick="document.getElementById('order-tracking-popup').remove()">Close</button>
     </div>
   `;
 
   let popup = document.createElement('div');
   popup.id = 'order-tracking-popup';
-  popup.style.position = 'fixed';
-  popup.style.top = '0';
-  popup.style.left = '0';
-  popup.style.width = '100vw';
-  popup.style.height = '100vh';
-  popup.style.background = 'rgba(0,0,0,0.25)';
-  popup.style.display = 'flex';
-  popup.style.alignItems = 'center';
-  popup.style.justifyContent = 'center';
   popup.innerHTML = html;
   document.body.appendChild(popup);
-
-  
 };

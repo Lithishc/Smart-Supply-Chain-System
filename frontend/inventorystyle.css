@@ -232,6 +232,29 @@ th {
   font-size: 1.2rem;
   cursor: pointer;
 }
+.close-btn {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  background: #e0e7ff;
+  color: #003366;
+  border: none;
+  border-radius: 999px;
+  width: 38px;
+  height: 38px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.close-btn:hover {
+  background: #b3c6ff;
+  color: #001a33;
+}
 
 /* --- Editable input styles in table --- */
 .editable-input {
