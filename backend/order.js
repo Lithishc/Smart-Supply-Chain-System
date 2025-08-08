@@ -116,6 +116,20 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
   let tracking = order.tracking || [];
 
   // Build tracking UI (no inline CSS, use classes and structure for CSS file)
+  let markFulfilledBtn = "";
+  if (
+    (order.status === "delivered" || order.status === "Delivered") &&
+    globalProcurementId
+  ) {
+    markFulfilledBtn = `
+      <div style="margin-top:14px;">
+        <button class="pill-btn accept" onclick="window.markProcurementFulfilled('${uid}','${globalProcurementId}')">
+          Mark as Fulfilled & Update Inventory
+        </button>
+      </div>
+    `;
+  }
+
   let html = `
     <div>
       <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
@@ -124,6 +138,7 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
         <b>Order ID:</b> ${orderId}<br>
         <b>Item:</b> ${order.itemName}<br>
         <b>Current Status:</b> ${order.status}
+        ${markFulfilledBtn}
       </div>
       <h3>Updates:</h3>
       <table>

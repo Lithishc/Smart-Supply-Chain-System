@@ -150,9 +150,7 @@ th {
   gap: 8px;
 }
 .offer-label {
-  color: #1956a3;
-  font-weight: 500;
-  min-width: 90px;
+  color: #000000;
   display: inline-block;
 }
 .offer-value {
