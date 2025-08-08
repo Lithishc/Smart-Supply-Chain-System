@@ -17,7 +17,7 @@ async function loadOrders(uid) {
   tableBody.innerHTML = "";
   const ordersSnap = await getDocs(collection(db, "users", uid, "orders"));
   if (ordersSnap.empty) {
-    tableBody.innerHTML = `<tr><td colspan="7">No orders found.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8">No orders found.</td></tr>`;
     return;
   }
   ordersSnap.forEach((docSnap) => {
