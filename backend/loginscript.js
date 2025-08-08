@@ -48,22 +48,6 @@ loginForm.addEventListener("submit", async (e) => {
     }
 });
 
-// Handle Password Reset
-forgotPasswordLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    
-    const email = prompt("Enter your email to reset password:");
-    if (email) {
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("Password reset email sent! Check your inbox.");
-        } catch (error) {
-            alert("Error sending reset email. Make sure your email is correct.");
-            console.error("Password reset error:", error);
-        }
-    }
-});
-
 // Redirect to Register Page
 createAccountLink.addEventListener("click", (e) => {
     e.preventDefault();
