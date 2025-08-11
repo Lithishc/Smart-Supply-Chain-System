@@ -186,14 +186,30 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     supplierResponses: updatedOffers
   });
 
-  // Add order for dealer (include offerId)
-  await addDoc(collection(db, "users", uid, "orders"), {
+  // 1. Create global order
+  const globalOrderRef = await addDoc(collection(db, "globalOrders"), {
+    dealerUid: uid,
+    supplierUid: acceptedOffer.supplierUid,
     procurementId: userRequestId,
     globalProcurementId,
     offerId: acceptedOffer.offerId,
-    orderID: reqData.itemID,
+    itemID: reqData.itemID,
     itemName: reqData.itemName,
     quantity: reqData.requestedQty,
+    supplier: acceptedOffer.supplierName,
+    price: acceptedOffer.price,
+    details: acceptedOffer.details,
+    status: "ordered",
+    tracking: [],
+    createdAt: new Date()
+  });
+  const globalOrderId = globalOrderRef.id;
+
+  // 2. Store reference in dealer's orders
+  await addDoc(collection(db, "users", uid, "orders"), {
+    globalOrderId,
+    ...reqData,
+    offerId: acceptedOffer.offerId,
     supplier: acceptedOffer.supplierName,
     price: acceptedOffer.price,
     details: acceptedOffer.details,
@@ -201,29 +217,27 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     createdAt: new Date()
   });
 
-  // Add order for supplier (if supplierUid is present, include offerId)
+  // 3. Store reference in supplier's orderFulfilment
   if (acceptedOffer.supplierUid) {
-    await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orders"), {
-      globalProcurementId,
+    await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orderFulfilment"), {
+      globalOrderId,
+      ...reqData,
       offerId: acceptedOffer.offerId,
-      itemID: reqData.itemID,
-      itemName: reqData.itemName,
-      quantity: reqData.requestedQty,
       dealer: uid,
       price: acceptedOffer.price,
       details: acceptedOffer.details,
-      status: "accepted",
+      status: "ordered",
       createdAt: new Date()
     });
   }
 
-  // Update supplier's offer status in their offers collection
+  // 4. Update supplier's offer status in their offers collection
   if (acceptedOffer.supplierUid && acceptedOffer.offerId) {
     const supplierOfferRef = doc(db, "users", acceptedOffer.supplierUid, "offers", acceptedOffer.offerId);
-    await updateDoc(supplierOfferRef, { status: "accepted" });
+    await updateDoc(supplierOfferRef, { status: "accepted", globalOrderId });
   }
 
-  alert("Offer accepted and order created!");
+  alert("Offer accepted and global order created!");
   document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };
