@@ -29,12 +29,19 @@
     </table>
   </div>
   <script type="module" src="../backend/order.js"></script>
-   <script>
+  <script>
   fetch('navbar.html')
     .then(response => response.text())
     .then(data => {
       document.getElementById('navbar-placeholder').innerHTML = data;
+      // Highlight the active nav link after navbar is loaded
+      const path = window.location.pathname.split('/').pop();
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === path) {
+          link.classList.add('active');
+        }
+      });
     });
-  </script>
+</script>
 </body>
 </html>
