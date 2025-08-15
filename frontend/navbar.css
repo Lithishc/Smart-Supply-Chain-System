@@ -53,6 +53,11 @@
   transform: translateY(-2px) scale(1.05);
 }
 
+.profile-icon {
+  font-size: 1.1em;
+  margin-right: 6px;
+}
+
 .navbar a.active,nav-link.active {
   background: rgba(0, 38, 77, 0.55);
   color: #fff;

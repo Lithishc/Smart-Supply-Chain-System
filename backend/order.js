@@ -141,7 +141,7 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
     }
   }
 
-  // Build tracking UI (use modal style)
+  // Build tracking UI (use popup style)
   let markFulfilledBtn = "";
   if (
     (status === "delivered" || status === "Delivered") &&
@@ -184,7 +184,7 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
     </div>
   `;
 
-  // --- FIX: Use modal overlay with .popup class ---
+  // --- FIX: Use popup overlay with .popup class ---
   let popup = document.createElement('div');
   popup.id = 'order-tracking-popup';
   popup.className = 'popup';

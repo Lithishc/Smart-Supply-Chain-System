@@ -8,7 +8,8 @@
 </head>
 <body>
 
-<div class="navbar" id="navbar-placeholder">
+<!-- Only the navbar markup, no <html> or <body> tags -->
+<div class="navbar">
   <a href="dashboard.html" class="nav-link">Dashboard</a>
   <a href="inventory.html" class="nav-link">Inventory</a>
   <a href="procurement.html" class="nav-link">Procurement</a>
@@ -16,14 +17,17 @@
   <a href="orders.html" class="nav-link">Orders</a>
   <a href="offers.html" class="nav-link">Offers</a>
   <div class="dropdown">
-    <a href="profile.html" class="dropbtn nav-link">Profile</a>
+    <a href="profile.html" class="dropbtn nav-link" id="profile-tab">
+      <span class="profile-icon" style="vertical-align:middle;">👤</span>
+      <span id="navbar-username" style="vertical-align:middle;">Profile</span>
+    </a>
     <div class="dropdown-content">
       <a href="profile.html" class="nav-link">Profile</a>
       <a href="supplier-details.html" class="nav-link">Supplier Details</a>
+      <a href="#" id="logout-link" class="nav-link">Logout</a>
     </div>
   </div>
 </div>
-
 
 </body>
 </html>
