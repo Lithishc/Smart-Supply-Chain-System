@@ -30,7 +30,10 @@ async function loadOrders(uid) {
     let quantity = order.quantity ?? order.requestedQty ?? (order.acceptedOffer && order.acceptedOffer.requestedQty) ?? "-";
 
     // Show the order status, then the Track button
-    let statusCell = `${order.status} <button onclick="window.showTracking('${uid}', '${orderId}', '${globalProcurementId}')">Track</button>`;
+    let statusCell = `
+      <span class="status-text">${order.status}</span>
+      <button class="pill-btn" onclick="window.showTracking('${uid}', '${orderId}', '${globalProcurementId}')">Track</button>
+    `;
     if (order.status === "delivered" && globalProcurementId) {
       statusCell += ` <button onclick="window.markProcurementFulfilled('${uid}','${orderId}', '${globalProcurementId}')"
         style="margin-left:8px;">Mark as Fulfilled & Update Inventory</button>`;
@@ -44,7 +47,7 @@ async function loadOrders(uid) {
         <td>${order.supplier}</td>
         <td>₹${order.price}</td>
         <td>${order.details}</td>
-        <td>${statusCell}</td>
+        <td class="status-cell">${statusCell}</td>
         <td>${date.toLocaleString()}</td>
       </tr>
     `;
