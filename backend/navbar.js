@@ -19,12 +19,19 @@ export function loadNavbar() {
         }
       });
 
+      // Set spinner or blank immediately
+      const usernameSpan = document.getElementById('navbar-username');
+      if (usernameSpan) {
+        usernameSpan.textContent = localStorage.getItem("navbarUsername") || "...";
+        usernameSpan.classList.add("loading");
+      }
+
       // Show username and handle logout
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           // Fetch username from Firestore
           const userDoc = await getDoc(doc(db, "users", user.uid));
-          let username = "Profile";
+          let username = localStorage.getItem("navbarUsername") || "";
           if (userDoc.exists()) {
             if (userDoc.data().username) {
               username = userDoc.data().username;
@@ -36,9 +43,11 @@ export function loadNavbar() {
           } else if (user.email) {
             username = user.email.split('@')[0];
           }
-          const usernameSpan = document.getElementById('navbar-username');
-          console.log("usernameSpan:", usernameSpan, "username:", username);
-          if (usernameSpan) usernameSpan.textContent = username;
+          localStorage.setItem("navbarUsername", username); // Update cache
+          if (usernameSpan) {
+            usernameSpan.textContent = username;
+            usernameSpan.classList.remove("loading");
+          }
         }
       });
 
@@ -48,6 +57,7 @@ export function loadNavbar() {
         logoutLink.addEventListener('click', async (e) => {
           e.preventDefault();
           await signOut(auth);
+          localStorage.removeItem("navbarUsername"); // Clear cache on logout
           window.location.href = "../index.html";
         });
       }
