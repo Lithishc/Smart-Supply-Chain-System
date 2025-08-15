@@ -50,43 +50,25 @@ async function loadInventoryForProcurement(uid) {
       }
     });
 
-    // --- AUTOMATION: Create request if needed ---
-    // Use requestQty if set, otherwise fallback to presetQty
-    const qtyToRequest = requestQty > 0 ? requestQty : presetQty;
-    // Only automate if no open request OR last request is fulfilled
-    const shouldAutomate = presetMode && qtyToRequest > 0 && quantity < presetQty && (!existingRequest && (!lastRequest || lastRequest.fulfilled === true));
-    if (shouldAutomate) {
-      const requestData = {
-        itemID: item.itemID,
-        itemName: item.itemName,
-        requestedQty: qtyToRequest,
-        currentQty: quantity,
-        status: "open",
-        supplierResponses: [],
-        userUid: uid,
-        createdAt: new Date(),
-        fulfilled: false // Track if order is fulfilled
-      };
-      // Add to global procurementRequests for suppliers
-      const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), requestData);
-      await updateDoc(globalReqRef, { globalProcurementId: globalReqRef.id });
+    
 
-      // Add to user's procurementRequests, store globalProcurementId
-      const userReqRef = await addDoc(collection(db, "users", uid, "procurementRequests"), {
-        ...requestData,
-        globalProcurementId: globalReqRef.id
-      });
-      await updateDoc(userReqRef, { requestId: userReqRef.id }); // Optionally keep for legacy
-    }
-
-    if (existingRequest && Array.isArray(existingRequest.supplierResponses) && existingRequest.supplierResponses.length > 0) {
-      offerCount = existingRequest.supplierResponses.length;
-      offersHtml = `
-        <button onclick="window.viewOffers('${uid}','${lastglobalProcurementId}','${requestId}')">
-          View Offers (${offerCount})
-        </button>
-      `;
-      requestStatus = "Offers Received";
+    if (existingRequest && Array.isArray(existingRequest.supplierResponses)) {
+      // Only count non-rejected offers
+      const nonRejectedOffers = existingRequest.supplierResponses.filter(
+        offer => offer.status !== "rejected"
+      );
+      offerCount = nonRejectedOffers.length;
+      if (offerCount > 0) {
+        offersHtml = `
+          <button onclick="window.viewOffers('${uid}','${lastglobalProcurementId}','${requestId}')">
+            View Offers (${offerCount})
+          </button>
+        `;
+        requestStatus = "Offers Received";
+      } else {
+        offersHtml = "No offers yet";
+        requestStatus = "Requested";
+      }
     } else if (existingRequest) {
       requestStatus = "Requested";
       offersHtml = "No offers yet";
@@ -123,18 +105,31 @@ window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
   const reqSnap = await getDoc(reqRef);
   if (!reqSnap.exists()) return;
   const reqData = reqSnap.data();
-  const offers = reqData.supplierResponses || [];
+  // Only show offers that are not rejected
+  const offers = (reqData.supplierResponses || []).filter(offer => offer.status !== "rejected");
   let html = `<h3>Supplier Offers</h3>`;
   if (offers.length === 0) {
     html += "<p>No offers yet.</p>";
   } else {
     offers.forEach((offer, idx) => {
       html += `
-        <div style="border-bottom:1px solid #eee; margin-bottom:10px; padding-bottom:8px;">
-          <b>${offer.supplierName}</b>: ₹${offer.price}<br>
-          <span>${offer.details}</span><br>
-          <button onclick="window.acceptOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Accept</button>
-          <button onclick="window.rejectOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Reject</button>
+        <div class="offer-card">
+          <div class="offer-header">
+            <span class="offer-label">Supplier Name:</span>
+            <span class="offer-value">${offer.supplierName}</span>
+          </div>
+          <div class="offer-row">
+            <span class="offer-label">Price:</span>
+            <span class="offer-value">₹${offer.price}</span>
+          </div>
+          <div class="offer-row">
+            <span class="offer-label">Details:</span>
+            <span class="offer-value">${offer.details}</span>
+          </div>
+          <div class="offer-actions">
+            <button class="pill-btn accept" onclick="window.acceptOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Accept</button>
+            <button class="pill-btn reject" onclick="window.rejectOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Reject</button>
+          </div>
         </div>
       `;
     });
@@ -144,20 +139,17 @@ window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
   if (!popup) {
     popup = document.createElement('div');
     popup.id = 'offers-popup';
-    popup.style.position = 'fixed';
-    popup.style.top = '50%';
-    popup.style.left = '50%';
-    popup.style.transform = 'translate(-50%, -50%)';
-    popup.style.background = '#fff';
-    popup.style.padding = '24px';
-    popup.style.borderRadius = '16px';
-    popup.style.boxShadow = '0 8px 32px 0 rgba(31,38,135,0.18)';
-    popup.style.zIndex = '9999';
-    popup.innerHTML = `<button onclick="document.body.removeChild(this.parentNode)">Close</button><div id="offers-content"></div>`;
+    popup.className = 'popup';
+    popup.innerHTML = `
+      <div class="popup-content">
+        <button class="close-btn" onclick="document.getElementById('offers-popup').remove()">&times;</button>
+        <div id="offers-content"></div>
+      </div>
+    `;
     document.body.appendChild(popup);
   }
   popup.querySelector('#offers-content').innerHTML = html;
-  popup.style.display = 'block';
+  popup.style.display = 'flex';
 };
 
 
@@ -194,14 +186,30 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     supplierResponses: updatedOffers
   });
 
-  // Add order for dealer (include offerId)
-  await addDoc(collection(db, "users", uid, "orders"), {
+  // 1. Create global order
+  const globalOrderRef = await addDoc(collection(db, "globalOrders"), {
+    dealerUid: uid,
+    supplierUid: acceptedOffer.supplierUid,
     procurementId: userRequestId,
     globalProcurementId,
     offerId: acceptedOffer.offerId,
-    orderID: reqData.itemID,
+    itemID: reqData.itemID,
     itemName: reqData.itemName,
     quantity: reqData.requestedQty,
+    supplier: acceptedOffer.supplierName,
+    price: acceptedOffer.price,
+    details: acceptedOffer.details,
+    status: "ordered",
+    tracking: [],
+    createdAt: new Date()
+  });
+  const globalOrderId = globalOrderRef.id;
+
+  // 2. Store reference in dealer's orders
+  await addDoc(collection(db, "users", uid, "orders"), {
+    globalOrderId,
+    ...reqData,
+    offerId: acceptedOffer.offerId,
     supplier: acceptedOffer.supplierName,
     price: acceptedOffer.price,
     details: acceptedOffer.details,
@@ -209,29 +217,27 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     createdAt: new Date()
   });
 
-  // Add order for supplier (if supplierUid is present, include offerId)
+  // 3. Store reference in supplier's orderFulfilment
   if (acceptedOffer.supplierUid) {
-    await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orders"), {
-      globalProcurementId,
+    await addDoc(collection(db, "users", acceptedOffer.supplierUid, "orderFulfilment"), {
+      globalOrderId,
+      ...reqData,
       offerId: acceptedOffer.offerId,
-      itemID: reqData.itemID,
-      itemName: reqData.itemName,
-      quantity: reqData.requestedQty,
       dealer: uid,
       price: acceptedOffer.price,
       details: acceptedOffer.details,
-      status: "accepted",
+      status: "ordered",
       createdAt: new Date()
     });
   }
 
-  // Update supplier's offer status in their offers collection
+  // 4. Update supplier's offer status in their offers collection
   if (acceptedOffer.supplierUid && acceptedOffer.offerId) {
     const supplierOfferRef = doc(db, "users", acceptedOffer.supplierUid, "offers", acceptedOffer.offerId);
-    await updateDoc(supplierOfferRef, { status: "accepted" });
+    await updateDoc(supplierOfferRef, { status: "accepted", globalOrderId });
   }
 
-  alert("Offer accepted and order created!");
+  alert("Offer accepted and global order created!");
   document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };

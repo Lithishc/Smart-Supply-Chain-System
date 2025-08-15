@@ -67,5 +67,6 @@ forgotPasswordLink.addEventListener("click", async (e) => {
 // Redirect to Register Page
 createAccountLink.addEventListener("click", (e) => {
     e.preventDefault();
-    window.location.href = "registry.html";
+    window.location.href = "frontend/registry.html";
 });
+

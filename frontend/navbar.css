@@ -53,7 +53,12 @@
   transform: translateY(-2px) scale(1.05);
 }
 
-.navbar a.active {
+.profile-icon {
+  font-size: 1.1em;
+  margin-right: 6px;
+}
+
+.navbar a.active,nav-link.active {
   background: rgba(0, 38, 77, 0.55);
   color: #fff;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.10);
@@ -100,6 +105,10 @@
 
 .dropdown:hover .dropdown-content {
   display: flex;
+}
+
+#navbar-username.loading {
+  opacity: 0.7;
 }
 
 @media (max-width: 900px) {

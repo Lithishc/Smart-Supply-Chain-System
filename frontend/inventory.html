@@ -55,16 +55,14 @@
 
     <script type="module" src="../backend/inventory.js"></script>
     <script>
-      fetch('navbar.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('navbar-placeholder').innerHTML = data;
-        });
-
       // Show popup on add button click
       document.getElementById('show-add-popup').onclick = function() {
         document.getElementById('fluid-popup').style.display = 'flex';
       };
     </script>
+    <script type="module">
+    import { loadNavbar } from '../backend/navbar.js';
+    loadNavbar();
+  </script>
 </body>
 </html>

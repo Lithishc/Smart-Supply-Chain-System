@@ -116,6 +116,42 @@ th {
   padding: 7px 6px;
 }
 
+/* Status cell styles */
+.status-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  padding-right: 16px;
+}
+
+.status-text {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+  padding-left: 8px;
+}
+
+/* Pill button styles */
+.pill-btn {
+  background: #1956a3;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 22px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s;
+  margin-left: 12px;
+  margin-right: 0;
+}
+
+.pill-btn:hover {
+  background: #003366;
+  color: #fff;
+}
 
 /* Responsive */
 @media (max-width: 600px) {

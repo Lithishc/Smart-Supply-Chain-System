@@ -15,12 +15,9 @@
     <p>Select a tab from the menu to begin.</p>
   </div>
 
-  <script>
-  fetch('navbar.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('navbar-placeholder').innerHTML = data;
-    });
+  <script type="module">
+    import { loadNavbar } from '../backend/navbar.js';
+    loadNavbar();
   </script>
 </body>
 </html>

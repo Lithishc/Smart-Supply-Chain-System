@@ -26,60 +26,36 @@ async function loadOrders(uid) {
     const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
     let globalProcurementId = order.globalProcurementId || (order.acceptedOffer && order.acceptedOffer.globalProcurementId) || null;
 
-     if (order.status === "delivered" && globalProcurementId) {
+    // --- FIX: Use correct quantity field ---
+    let quantity = order.quantity ?? order.requestedQty ?? (order.acceptedOffer && order.acceptedOffer.requestedQty) ?? "-";
+
+    // Show the order status, then the Track button
+    let statusCell = `
+      <span class="status-text">${order.status}</span>
+      <button class="pill-btn" onclick="window.showTracking('${uid}', '${orderId}', '${globalProcurementId}')">Track</button>
+    `;
+    if (order.status === "delivered" && globalProcurementId) {
       statusCell += ` <button onclick="window.markProcurementFulfilled('${uid}','${orderId}', '${globalProcurementId}')"
         style="margin-left:8px;">Mark as Fulfilled & Update Inventory</button>`;
     }
-    // Show the order status, then the Track button
-    let statusCell = `${order.status} <button onclick="window.showTracking('${uid}', '${orderId}', '${globalProcurementId}')">Track</button>`;
 
     tableBody.innerHTML += `
       <tr>
         <td>${orderId}</td>
         <td>${order.itemName}</td>
-        <td>${order.quantity}</td>
+        <td>${quantity}</td>
         <td>${order.supplier}</td>
         <td>₹${order.price}</td>
         <td>${order.details}</td>
-        <td>${statusCell}</td>
+        <td class="status-cell">${statusCell}</td>
         <td>${date.toLocaleString()}</td>
       </tr>
     `;
   });
 }
 
-window.markProcurementFulfilled = async (uid, globalProcurementId) => {
-  // Find the user's procurementRequest doc by globalProcurementId
-  const userReqQuery = query(
-    collection(db, "users", uid, "procurementRequests"),
-    where("globalProcurementId", "==", globalProcurementId)
-  );
-  const userReqSnap = await getDocs(userReqQuery);
-
-  // Ensure we found a procurement request before proceeding
-  if (userReqSnap.empty) {
-    alert("No matching procurement request found for this order.");
-    return;
-  }
-
-  // Update all matching procurement requests (should only be one)
-  for (const userDoc of userReqSnap.docs) {
-    await updateDoc(doc(db, "users", uid, "procurementRequests", userDoc.id), { fulfilled: true });
-
-    // Find the itemID from the procurement request
-    const itemID = userDoc.data().itemID;
-
-    const newQty = prompt("Enter new stock quantity after procurement:");
-    if (newQty && itemID) {
-      const inventoryQuery = query(collection(db, "users", uid, "inventory"), where("itemID", "==", itemID));
-      const invSnap = await getDocs(inventoryQuery);
-      for (const docRef of invSnap.docs) {
-        await updateDoc(doc(db, "users", uid, "inventory", docRef.id), { quantity: Number(newQty) });
-      }
-    }
-  }
-
-  // Also mark as fulfilled in global procurementRequests collection
+window.markProcurementFulfilled = async (uid, globalProcurementId, globalOrderId) => {
+  // 1. Mark as fulfilled in globalProcurementRequests
   const globalQuery = query(
     collection(db, "globalProcurementRequests"),
     where("globalProcurementId", "==", globalProcurementId)
@@ -89,19 +65,59 @@ window.markProcurementFulfilled = async (uid, globalProcurementId) => {
     await updateDoc(doc(db, "globalProcurementRequests", globalDoc.id), { fulfilled: true });
   }
 
-  // Mark the order status as fulfilled
-  const ordersQuery = query(
+  // 2. Mark as fulfilled in user's procurementRequests
+  const userReqQuery = query(
+    collection(db, "users", uid, "procurementRequests"),
+    where("globalProcurementId", "==", globalProcurementId)
+  );
+  const userReqSnap = await getDocs(userReqQuery);
+  let itemID = null;
+  for (const userDoc of userReqSnap.docs) {
+    await updateDoc(doc(db, "users", uid, "procurementRequests", userDoc.id), { fulfilled: true });
+    itemID = userDoc.data().itemID;
+  }
+
+  // 3. Update inventory
+  if (itemID) {
+    const newQty = prompt("Enter new stock quantity after procurement:");
+    if (newQty) {
+      const inventoryQuery = query(collection(db, "users", uid, "inventory"), where("itemID", "==", itemID));
+      const invSnap = await getDocs(inventoryQuery);
+      for (const docRef of invSnap.docs) {
+        await updateDoc(doc(db, "users", uid, "inventory", docRef.id), { quantity: Number(newQty) });
+      }
+    }
+  }
+
+  // 4. Mark as fulfilled in globalOrders
+  if (globalOrderId) {
+    await updateDoc(doc(db, "globalOrders", globalOrderId), { status: "fulfilled" });
+  } else {
+    // Try to find globalOrderId from user's orders
+    const ordersQuery = query(
+      collection(db, "users", uid, "orders"),
+      where("globalProcurementId", "==", globalProcurementId)
+    );
+    const ordersSnap = await getDocs(ordersQuery);
+    for (const orderDoc of ordersSnap.docs) {
+      const orderData = orderDoc.data();
+      if (orderData.globalOrderId) {
+        await updateDoc(doc(db, "globalOrders", orderData.globalOrderId), { status: "fulfilled" });
+      }
+    }
+  }
+
+  // 5. Mark as fulfilled in user's orders
+  const ordersQuery2 = query(
     collection(db, "users", uid, "orders"),
     where("globalProcurementId", "==", globalProcurementId)
   );
-  const ordersSnap = await getDocs(ordersQuery);
-  for (const orderDoc of ordersSnap.docs) {
+  const ordersSnap2 = await getDocs(ordersQuery2);
+  for (const orderDoc of ordersSnap2.docs) {
     await updateDoc(doc(db, "users", uid, "orders", orderDoc.id), { status: "fulfilled" });
   }
 
   alert("Procurement marked as fulfilled and updated inventory successfully.");
-
-  // Optionally reload orders table to reflect changes
   loadOrders(uid);
 };
 
@@ -112,18 +128,46 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
   if (!orderSnap.exists()) return;
   const order = orderSnap.data();
 
-  // Fetch tracking history (array of {status, date, location, note})
-  let tracking = order.tracking || [];
+  // Try to get globalOrderId
+  const globalOrderId = order.globalOrderId || null;
 
-  // Build tracking UI (no inline CSS, use classes and structure for CSS file)
+  // Fetch tracking from globalOrders if available
+  let tracking = order.tracking || [];
+  let status = order.status;
+  if (globalOrderId) {
+    const globalOrderRef = doc(db, "globalOrders", globalOrderId);
+    const globalOrderSnap = await getDoc(globalOrderRef);
+    if (globalOrderSnap.exists()) {
+      const globalOrder = globalOrderSnap.data();
+      tracking = globalOrder.tracking || tracking;
+      status = globalOrder.status || status;
+    }
+  }
+
+  // Build tracking UI (use popup style)
+  let markFulfilledBtn = "";
+  if (
+    (status === "delivered" || status === "Delivered") &&
+    globalProcurementId
+  ) {
+    markFulfilledBtn = `
+      <div style="margin-top:14px;">
+        <button class="pill-btn accept" onclick="window.markProcurementFulfilled('${uid}','${globalProcurementId}','${globalOrderId}')">
+          Mark as Fulfilled & Update Inventory
+        </button>
+      </div>
+    `;
+  }
+
   let html = `
-    <div>
+    <div class="popup-content">
       <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
       <h2>Order Tracking</h2>
       <div style="margin-bottom:16px;">
         <b>Order ID:</b> ${orderId}<br>
         <b>Item:</b> ${order.itemName}<br>
-        <b>Current Status:</b> ${order.status}
+        <b>Current Status:</b> ${status}
+        ${markFulfilledBtn}
       </div>
       <h3>Updates:</h3>
       <table>
@@ -143,8 +187,45 @@ window.showTracking = async (uid, orderId, globalProcurementId) => {
     </div>
   `;
 
+  // --- FIX: Use popup overlay with .popup class ---
   let popup = document.createElement('div');
   popup.id = 'order-tracking-popup';
+  popup.className = 'popup';
   popup.innerHTML = html;
   document.body.appendChild(popup);
 };
+
+// Utility: Sync all user orders with the latest global order data
+async function syncOrdersWithGlobal(globalOrderId) {
+  // Get the latest global order data
+  const globalOrderRef = doc(db, "globalOrders", globalOrderId);
+  const globalOrderSnap = await getDoc(globalOrderRef);
+  if (!globalOrderSnap.exists()) return;
+  const globalOrder = globalOrderSnap.data();
+
+  // Find all user orders referencing this globalOrderId (dealer and supplier)
+  const ordersQuery = query(
+    collectionGroup(db, "orders"),
+    where("globalOrderId", "==", globalOrderId)
+  );
+  const ordersSnap = await getDocs(ordersQuery);
+  for (const docSnap of ordersSnap.docs) {
+    await updateDoc(docSnap.ref, {
+      status: globalOrder.status,
+      tracking: globalOrder.tracking
+    });
+  }
+
+  // Also update supplier's orderFulfilment if you use it
+  const fulfilQuery = query(
+    collectionGroup(db, "orderFulfilment"),
+    where("globalOrderId", "==", globalOrderId)
+  );
+  const fulfilSnap = await getDocs(fulfilQuery);
+  for (const docSnap of fulfilSnap.docs) {
+    await updateDoc(docSnap.ref, {
+      status: globalOrder.status,
+      tracking: globalOrder.tracking
+    });
+  }
+}

@@ -1,0 +1,14 @@
+# Ignore everything
+*
+
+# But not these files/folders:
+!LICENSE
+!README*
+!index.html
+!registry.html
+!frontend/
+!backend/
+!.gitignore
+
+# Ignore VS Code settings
+.vscode/

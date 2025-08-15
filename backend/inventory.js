@@ -1,7 +1,7 @@
 // Import Firebase modules from your config and Firestore functions from CDN
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // DOM Elements
 const popup = document.getElementById('fluid-popup');
@@ -129,7 +129,56 @@ async function loadInventory(uid) {
       const field = this.getAttribute('data-field');
       let value = this.value;
       if (field === "quantity") value = Number(value);
+
       await updateDoc(doc(db, "users", auth.currentUser.uid, "inventory", id), { [field]: value });
+
+      // --- AUTOMATION: Instantly create procurement request if needed ---
+      if (field === "quantity") {
+        const itemRef = doc(db, "users", auth.currentUser.uid, "inventory", id);
+        const itemSnap = await getDoc(itemRef);
+        if (!itemSnap.exists()) return;
+        const item = itemSnap.data();
+        const presetMode = item.presetMode || false;
+        const presetQty = Number(item.presetQty) || 0;
+        const requestQty = Number(item.requestQty) || 0;
+        const quantity = Number(value) || 0;
+
+        // Only automate if automation enabled, presetQty set, and quantity below presetQty
+        if (presetMode && presetQty > 0 && quantity < presetQty) {
+          // Check for existing open procurement request
+          const reqQuery = query(
+            collection(db, "users", auth.currentUser.uid, "procurementRequests"),
+            where("itemID", "==", item.itemID),
+            where("status", "==", "open")
+          );
+          const reqSnap = await getDocs(reqQuery);
+          if (reqSnap.empty) {
+            const qtyToRequest = requestQty > 0 ? requestQty : presetQty;
+            const requestData = {
+              itemID: item.itemID,
+              itemName: item.itemName,
+              requestedQty: qtyToRequest,
+              currentQty: quantity,
+              status: "open",
+              supplierResponses: [],
+              userUid: auth.currentUser.uid,
+              createdAt: new Date(),
+              fulfilled: false
+            };
+            // Add to global procurementRequests for suppliers
+            const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), requestData);
+            await updateDoc(globalReqRef, { globalProcurementId: globalReqRef.id });
+
+            // Add to user's procurementRequests, store globalProcurementId
+            const userReqRef = await addDoc(collection(db, "users", auth.currentUser.uid, "procurementRequests"), {
+              ...requestData,
+              globalProcurementId: globalReqRef.id
+            });
+            await updateDoc(userReqRef, { requestId: userReqRef.id });
+            alert("Procurement request created automatically!");
+          }
+        }
+      }
     });
   });
 }

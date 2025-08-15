@@ -44,11 +44,8 @@
   </div>
 
   <script type="module" src="../backend/profile.js"></script>
-  <script>
-    fetch('navbar.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('navbar-placeholder').innerHTML = data;
-      });
+ <script type="module">
+    import { loadNavbar } from '../backend/navbar.js';
+    loadNavbar();
   </script>
 </html>

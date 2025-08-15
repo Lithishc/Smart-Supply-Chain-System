@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { collection, getDocs, doc, getDoc, updateDoc, query,where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, updateDoc, query,where,collectionGroup } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const tableBody = document.querySelector('#offers-table tbody');
 
@@ -36,24 +36,21 @@ async function loadOffers(uid) {
       }
     }
 
-    // --- Find related order ---
+    // --- Find related global order ---
     let orderStatus = "-";
-    let orderId = null;
-    if (offerId) {
-      const ordersSnap = await getDocs(collection(db, "users", uid, "orders"));
-      for (const orderDoc of ordersSnap.docs) {
-        const order = orderDoc.data();
-        if (order.offerId === offerId) {
-          orderStatus = order.status || "-";
-          orderId = orderDoc.id;
-          break;
-        }
+    let globalOrderId = offer.globalOrderId || null;
+    if (globalOrderId) {
+      const globalOrderRef = doc(db, "globalOrders", globalOrderId);
+      const globalOrderSnap = await getDoc(globalOrderRef);
+      if (globalOrderSnap.exists()) {
+        const globalOrder = globalOrderSnap.data();
+        orderStatus = globalOrder.status || "-";
       }
     }
 
     // --- Make orderId clickable if exists ---
-    let orderStatusCell = orderId
-      ? `<a href="#" class="order-link" data-order-id="${orderId}" data-global-id="${offer.globalProcurementId}">${orderId}</a>`
+    let orderStatusCell = globalOrderId
+      ? `<a href="#" class="order-link" data-order-id="${globalOrderId}" data-global-id="${offer.globalProcurementId}" data-global-order-id="${globalOrderId}">${globalOrderId}</a>`
       : "-";
 
     tableBody.innerHTML += `
@@ -78,40 +75,36 @@ async function loadOffers(uid) {
     document.querySelectorAll('.order-link').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const globalId = this.getAttribute('data-global-id');
-        window.UpdateTracking(auth.currentUser.uid, orderId, globalId);
+        const globalOrderId = this.getAttribute('data-global-order-id');
+        window.UpdateTracking(auth.currentUser.uid, globalOrderId);
       });
     });
   }, 100);
 }
 
 
-window.UpdateTracking = async (uid, orderId, globalProcurementId) => {
-  // Fetch order
-  const orderRef = doc(db, "users", uid, "orders", orderId);
-  const orderSnap = await getDoc(orderRef);
-  if (!orderSnap.exists()) return;
-  const order = orderSnap.data();
+window.UpdateTracking = async (uid, globalOrderId) => {
+  // Fetch global order
+  const globalOrderRef = doc(db, "globalOrders", globalOrderId);
+  const globalOrderSnap = await getDoc(globalOrderRef);
+  if (!globalOrderSnap.exists()) return;
+  const order = globalOrderSnap.data();
 
-  // Fetch tracking history (array of {status, date, location, note})
+  // Fetch tracking history
   let tracking = order.tracking || [];
-  // Default statuses
   const statusOptions = [
     "Preparing to Ship",
     "Shipped",
     "In Transit",
-    "Out for Delivery",
     "Delivered"
   ];
 
-  // Build tracking UI (no inline CSS, use classes and structure for CSS file)
   let html = `
     <div>
       <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
       <h2>Order Tracking</h2>
       <div style="margin-bottom:16px;">
-        <b>Order ID:</b> ${orderId}<br>
+        <b>Order ID:</b> ${globalOrderId}<br>
         <b>Item:</b> ${order.itemName}<br>
         <b>Current Status:</b> ${order.status}
       </div>
@@ -155,34 +148,56 @@ window.UpdateTracking = async (uid, orderId, globalProcurementId) => {
       { status: newStatus, date: now, note: "" }
     ];
 
-    // Update in user's orders
-    await updateDoc(orderRef, { status: newStatus, tracking: newTracking });
+    // 1. Update in globalOrders
+    await updateDoc(globalOrderRef, { status: newStatus, tracking: newTracking });
 
-    // Update in user's procurementRequests
-    if (globalProcurementId) {
-      const userReqQuery = query(
-        collection(db, "users", uid, "procurementRequests"),
-        where("globalProcurementId", "==", globalProcurementId)
+    // 2. Update in dealer's orders
+    const dealerOrderQuery = query(
+      collectionGroup(db, "orders"),
+      where("globalOrderId", "==", globalOrderId)
+    );
+    const dealerOrderSnap = await getDocs(dealerOrderQuery);
+    for (const docSnap of dealerOrderSnap.docs) {
+      await updateDoc(docSnap.ref, { status: newStatus, tracking: newTracking });
+    }
+
+    // 3. Update in supplier's orderFulfilment
+    const supplierOrderQuery = query(
+      collectionGroup(db, "orderFulfilment"),
+      where("globalOrderId", "==", globalOrderId)
+    );
+    const supplierOrderSnap = await getDocs(supplierOrderQuery);
+    for (const docSnap of supplierOrderSnap.docs) {
+      await updateDoc(docSnap.ref, { status: newStatus, tracking: newTracking });
+    }
+
+    // 4. (Optional) Update in globalProcurementRequests and procurementRequests
+    if (order.globalProcurementId) {
+      // globalProcurementRequests
+      const globalReqQuery = query(
+        collection(db, "globalProcurementRequests"),
+        where("globalProcurementId", "==", order.globalProcurementId)
       );
-      const userReqSnap = await getDocs(userReqQuery);
-      for (const userDoc of userReqSnap.docs) {
-        await updateDoc(doc(db, "users", uid, "procurementRequests", userDoc.id), {
+      const globalReqSnap = await getDocs(globalReqQuery);
+      for (const docRef of globalReqSnap.docs) {
+        await updateDoc(doc(db, "globalProcurementRequests", docRef.id), {
           status: newStatus,
           tracking: newTracking
         });
       }
-
-      // Update in global procurementRequests
-      const globalQuery = query(
-        collection(db, "globalProcurementRequests"),
-        where("globalProcurementId", "==", globalProcurementId)
-      );
-      const globalSnap = await getDocs(globalQuery);
-      for (const globalDoc of globalSnap.docs) {
-        await updateDoc(doc(db, "globalProcurementRequests", globalDoc.id), {
-          status: newStatus,
-          tracking: newTracking
-        });
+      // procurementRequests for dealer
+      if (order.dealerUid) {
+        const userReqQuery = query(
+          collection(db, "users", order.dealerUid, "procurementRequests"),
+          where("globalProcurementId", "==", order.globalProcurementId)
+        );
+        const userReqSnap = await getDocs(userReqQuery);
+        for (const userDoc of userReqSnap.docs) {
+          await updateDoc(doc(db, "users", order.dealerUid, "procurementRequests", userDoc.id), {
+            status: newStatus,
+            tracking: newTracking
+          });
+        }
       }
     }
 
