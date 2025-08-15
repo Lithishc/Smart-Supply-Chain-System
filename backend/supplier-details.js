@@ -15,7 +15,7 @@ let isEditing = false;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUid = user.uid;
-    const docRef = doc(db, "suppliers", currentUid);
+    const docRef = doc(db, "info", currentUid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       showSupplierInfo(docSnap.data());
@@ -67,7 +67,7 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!currentUid) return;
   const data = Object.fromEntries(new FormData(form).entries());
-  await setDoc(doc(db, "suppliers", currentUid), data);
+  await setDoc(doc(db, "info", currentUid), data);
   showSupplierInfo(data);
   setFormDisabled(true);
   showEditButton();

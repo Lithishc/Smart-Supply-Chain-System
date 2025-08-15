@@ -1,18 +1,17 @@
 import { db } from "./firebase-config.js";
 import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const auth = getAuth();
-const supplierUid = auth.currentUser ? auth.currentUser.uid : null;
-
 const tableBody = document.querySelector('#supplier-table tbody');
 
-async function loadOpenRequests() {
+async function loadOpenRequests(supplierUid) {
   tableBody.innerHTML = "";
   const reqSnap = await getDocs(collection(db, "globalProcurementRequests"));
   reqSnap.forEach((docSnap) => {
     const req = docSnap.data();
-    if (req.status === "open") {
+    // Only show requests NOT made by this supplier
+    if (req.status === "open" && req.userUid !== supplierUid) {
       tableBody.innerHTML += `
         <tr>
           <td>${req.itemName}</td>
@@ -94,4 +93,9 @@ window.sendOffer = async (e, reqId) => {
   loadOpenRequests();
 };
 
-loadOpenRequests();
+// Wait for authentication before loading requests
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loadOpenRequests(user.uid);
+  }
+});
