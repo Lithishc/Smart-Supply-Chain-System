@@ -6,39 +6,53 @@ const auth = getAuth();
 const tableBody = document.querySelector('#supplier-table tbody');
 
 async function loadOpenRequests(supplierUid) {
-  tableBody.innerHTML = "";
+  const marketplaceList = document.querySelector('.marketplace-list');
+  if (!marketplaceList) return;
+  marketplaceList.innerHTML = "";
   const reqSnap = await getDocs(collection(db, "globalProcurementRequests"));
   reqSnap.forEach((docSnap) => {
     const req = docSnap.data();
     // Only show requests NOT made by this supplier
     if (req.status === "open" && req.userUid !== supplierUid) {
-      tableBody.innerHTML += `
-        <tr>
-          <td>${req.itemName}</td>
-          <td>${req.requestedQty}</td>
-          <td>
-            <form onsubmit="window.sendOffer(event, '${docSnap.id}')">
-              <input type="text" name="supplierName" placeholder="Your Name" required>
-              <input type="number" name="price" placeholder="Offer Price" required>
-              <input type="text" name="details" placeholder="Details" required>
-              <button type="submit">Send Offer</button>
-            </form>
-          </td>
-        </tr>
+      marketplaceList.innerHTML += `
+        <div class="deal-card">
+          <div class="deal-details">
+            <div class="deal-title">${req.itemName}</div>
+            <div class="deal-meta">
+              <span><b>Requested Qty:</b> ${req.requestedQty}</span>
+              <span><b>Location:</b> ${req.location || "N/A"}</span>
+            </div>
+            <div class="deal-meta">
+              <span><b>Requested By:</b> ${req.userUid}</span>
+            </div>
+          </div>
+          <button class="pill-btn" onclick="window.showOfferPopup('${docSnap.id}')">Send Offer</button>
+        </div>
       `;
     }
   });
 }
 
-// This function must be global for inline form onsubmit
-window.sendOffer = async (e, reqId) => {
+let currentReqId = null;
+
+window.showOfferPopup = function(reqId) {
+  currentReqId = reqId;
+  document.getElementById('offer-popup').style.display = 'flex';
+};
+
+window.closeOfferPopup = function() {
+  document.getElementById('offer-popup').style.display = 'none';
+  document.getElementById('offer-form').reset();
+  currentReqId = null;
+};
+
+document.getElementById('offer-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   const form = e.target;
   const supplierName = form.supplierName.value;
   const price = form.price.value;
   const details = form.details.value;
 
-  // Get supplierUid at the time of offer
   const auth = getAuth();
   const supplierUid = auth.currentUser ? auth.currentUser.uid : null;
   if (!supplierUid) {
@@ -46,36 +60,31 @@ window.sendOffer = async (e, reqId) => {
     return;
   }
 
-  // Create offer object
   const offerData = {
-    globalProcurementId: reqId, // <-- use this for reference
+    globalProcurementId: currentReqId,
     supplierName,
     price,
     details,
     supplierUid,
     createdAt: new Date(),
-    status: "pending" // Track status for supplier
+    status: "pending"
   };
 
-  // Store offer in supplier's own offers subcollection and get offerId
   const offerRef = await addDoc(collection(db, "users", supplierUid, "offers"), offerData);
   const offerId = offerRef.id;
   offerData.offerId = offerId;
 
-  // Update global procurementRequests
-  const reqRef = doc(db, "globalProcurementRequests", reqId);
+  const reqRef = doc(db, "globalProcurementRequests", currentReqId);
   await updateDoc(reqRef, {
     supplierResponses: arrayUnion(offerData)
   });
 
-  // Also update the user's procurementRequests
   const reqSnap = await getDoc(reqRef);
   if (reqSnap.exists()) {
     const reqData = reqSnap.data();
     const userUid = reqData.userUid;
-    const globalProcurementId = reqSnap.id; // This is the global doc's id
+    const globalProcurementId = reqSnap.id;
 
-    // Find the user's procurement request by globalProcurementId
     const userReqQuery = query(
       collection(db, "users", userUid, "procurementRequests"),
       where("globalProcurementId", "==", globalProcurementId),
@@ -90,8 +99,9 @@ window.sendOffer = async (e, reqId) => {
   }
 
   alert("Offer sent!");
-  loadOpenRequests();
-};
+  window.closeOfferPopup();
+  loadOpenRequests(supplierUid);
+});
 
 // Wait for authentication before loading requests
 onAuthStateChanged(auth, (user) => {

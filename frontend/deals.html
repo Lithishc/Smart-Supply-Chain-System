@@ -10,23 +10,24 @@
   <div id="navbar-placeholder"></div>
   <div class="container">
     <h2>Market Place</h2>
-    <table id="supplier-table">
-      <thead>
-        <tr>
-          <th>Item Name</th>
-          <th>Requested Qty</th>
-          <th>Send Your Offer</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- JS will populate rows here -->
-      </tbody>
-    </table>
+    <div class="marketplace-list"></div>
   </div>
-  <script type="module" src="../backend/deals.js"></script>
+  <div id="offer-popup" class="fluid-popup-bg" style="display:none;">
+    <div class="fluid-popup-content">
+      <button class="close-btn" onclick="window.closeOfferPopup()">&times;</button>
+      <h3>Send Offer</h3>
+      <form id="offer-form">
+        <input type="text" name="supplierName" placeholder="Your Name" required>
+        <input type="number" name="price" placeholder="Offer Price" required>
+        <input type="text" name="details" placeholder="Details" required>
+        <button type="submit" class="pill-btn">Send Offer</button>
+      </form>
+    </div>
+  </div>
   <script type="module">
     import { loadNavbar } from '../backend/navbar.js';
     loadNavbar();
   </script>
+  <script type="module" src="../backend/deals.js"></script>
 </body>
 </html>
