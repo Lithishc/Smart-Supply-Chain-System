@@ -154,6 +154,24 @@ async function loadInventory(uid) {
           const reqSnap = await getDocs(reqQuery);
           if (reqSnap.empty) {
             const qtyToRequest = requestQty > 0 ? requestQty : presetQty;
+
+            // NEW: read dealer company/location from Supplier Details (info/{uid})
+            let dealerCompanyName = "";
+            let dealerAddress = "";
+            let dealerLocation = "";
+            try {
+              const infoRef = doc(db, "info", auth.currentUser.uid);
+              const infoSnap = await getDoc(infoRef);
+              if (infoSnap.exists()) {
+                const info = infoSnap.data();
+                dealerCompanyName = info.companyName || "";
+                dealerAddress = info.companyAddress || "";
+                dealerLocation = info.location || "";
+              }
+            } catch (err) {
+              console.warn("Supplier details not found:", err);
+            }
+
             const requestData = {
               itemID: item.itemID,
               itemName: item.itemName,
@@ -162,18 +180,22 @@ async function loadInventory(uid) {
               status: "open",
               supplierResponses: [],
               userUid: auth.currentUser.uid,
+              dealerCompanyName,
+              dealerAddress,
+              location: dealerLocation || dealerAddress || "",
               createdAt: new Date(),
               fulfilled: false
             };
+
             // Add to global procurementRequests for suppliers
             const globalReqRef = await addDoc(collection(db, "globalProcurementRequests"), requestData);
             await updateDoc(globalReqRef, { globalProcurementId: globalReqRef.id });
 
             // Add to user's procurementRequests, store globalProcurementId
-            const userReqRef = await addDoc(collection(db, "users", auth.currentUser.uid, "procurementRequests"), {
-              ...requestData,
-              globalProcurementId: globalReqRef.id
-            });
+            const userReqRef = await addDoc(
+              collection(db, "users", auth.currentUser.uid, "procurementRequests"),
+              { ...requestData, globalProcurementId: globalReqRef.id }
+            );
             await updateDoc(userReqRef, { requestId: userReqRef.id });
             alert("Procurement request created automatically!");
           }

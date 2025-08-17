@@ -1,30 +1,45 @@
 import { db } from "./firebase-config.js";
-import { collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import {
+  collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where, addDoc
+} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const auth = getAuth();
-const tableBody = document.querySelector('#supplier-table tbody');
+
+let prefill = { name: "", location: "" };
 
 async function loadOpenRequests(supplierUid) {
   const marketplaceList = document.querySelector('.marketplace-list');
   if (!marketplaceList) return;
   marketplaceList.innerHTML = "";
+
   const reqSnap = await getDocs(collection(db, "globalProcurementRequests"));
   reqSnap.forEach((docSnap) => {
     const req = docSnap.data();
-    // Only show requests NOT made by this supplier
     if (req.status === "open" && req.userUid !== supplierUid) {
+      const dealerName =
+        req.dealerCompanyName ||
+        req.companyName ||
+        req.requesterCompanyName ||
+        req.dealerName ||
+        req.name ||
+        req.username ||
+        (req.userUid ? `User ${req.userUid.slice(0, 6)}` : "Unknown Dealer");
+
+      const locAddr = [
+        req.location,
+        req.dealerAddress,
+        req.companyAddress,
+        req.address
+      ].filter(v => v && String(v).trim().length).join(", ") || "N/A";
+
       marketplaceList.innerHTML += `
         <div class="deal-card">
           <div class="deal-details">
             <div class="deal-title">${req.itemName}</div>
-            <div class="deal-meta">
-              <span><b>Requested Qty:</b> ${req.requestedQty}</span>
-              <span><b>Location:</b> ${req.location || "N/A"}</span>
-            </div>
-            <div class="deal-meta">
-              <span><b>Requested By:</b> ${req.userUid}</span>
-            </div>
+            <div class="deal-meta"><span><b>Requested Qty:</b> ${req.requestedQty}</span></div>
+            <div class="deal-meta"><span><b>Requested By:</b> ${dealerName}</span></div>
+            <div class="deal-meta"><span><b>Location/Address:</b> ${locAddr}</span></div>
           </div>
           <button class="pill-btn" onclick="window.showOfferPopup('${docSnap.id}')">Send Offer</button>
         </div>
@@ -35,25 +50,43 @@ async function loadOpenRequests(supplierUid) {
 
 let currentReqId = null;
 
-window.showOfferPopup = function(reqId) {
+window.showOfferPopup = function (reqId) {
   currentReqId = reqId;
-  document.getElementById('offer-popup').style.display = 'flex';
+  const popup = document.getElementById('offer-popup');
+  const form = document.getElementById('offer-form');
+  form.supplierName.value = prefill.name || "";
+  form.location.value = prefill.location || "";
+  popup.style.display = 'flex';
 };
 
-window.closeOfferPopup = function() {
+window.closeOfferPopup = function () {
   document.getElementById('offer-popup').style.display = 'none';
   document.getElementById('offer-form').reset();
   currentReqId = null;
 };
 
-document.getElementById('offer-form').addEventListener('submit', async function(e) {
+// Close on overlay click + Esc
+document.addEventListener('click', (e) => {
+  const overlay = document.getElementById('offer-popup');
+  if (overlay && e.target === overlay) window.closeOfferPopup();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') window.closeOfferPopup();
+});
+
+document.getElementById('offer-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const form = e.target;
-  const supplierName = form.supplierName.value;
-  const price = form.price.value;
-  const details = form.details.value;
 
-  const auth = getAuth();
+  const supplierName = form.supplierName.value;
+  const location = form.location.value;
+  const price = Number(form.price.value);
+  const details = form.details.value;
+  const paymentMethod = form.paymentMethod.value;
+  const paymentTerms = form.paymentTerms.value;
+  const deliveryMethod = form.deliveryMethod.value;
+  const deliveryDays = Number(form.deliveryDays.value);
+
   const supplierUid = auth.currentUser ? auth.currentUser.uid : null;
   if (!supplierUid) {
     alert("You must be logged in as a supplier to send an offer.");
@@ -63,22 +96,25 @@ document.getElementById('offer-form').addEventListener('submit', async function(
   const offerData = {
     globalProcurementId: currentReqId,
     supplierName,
+    location,
     price,
     details,
+    payment: { method: paymentMethod, terms: paymentTerms },
+    delivery: { method: deliveryMethod, days: deliveryDays },
     supplierUid,
     createdAt: new Date(),
     status: "pending"
   };
 
+  // Save under supplier's offers
   const offerRef = await addDoc(collection(db, "users", supplierUid, "offers"), offerData);
-  const offerId = offerRef.id;
-  offerData.offerId = offerId;
+  offerData.offerId = offerRef.id;
 
+  // Append into global request
   const reqRef = doc(db, "globalProcurementRequests", currentReqId);
-  await updateDoc(reqRef, {
-    supplierResponses: arrayUnion(offerData)
-  });
+  await updateDoc(reqRef, { supplierResponses: arrayUnion(offerData) });
 
+  // Append into request owner's user subcollection doc(s)
   const reqSnap = await getDoc(reqRef);
   if (reqSnap.exists()) {
     const reqData = reqSnap.data();
@@ -92,9 +128,10 @@ document.getElementById('offer-form').addEventListener('submit', async function(
     );
     const userReqSnap = await getDocs(userReqQuery);
     for (const userDoc of userReqSnap.docs) {
-      await updateDoc(doc(db, "users", userUid, "procurementRequests", userDoc.id), {
-        supplierResponses: arrayUnion(offerData)
-      });
+      await updateDoc(
+        doc(db, "users", userUid, "procurementRequests", userDoc.id),
+        { supplierResponses: arrayUnion(offerData) }
+      );
     }
   }
 
@@ -103,9 +140,22 @@ document.getElementById('offer-form').addEventListener('submit', async function(
   loadOpenRequests(supplierUid);
 });
 
-// Wait for authentication before loading requests
-onAuthStateChanged(auth, (user) => {
+// Wait for authentication, prefetch supplier details for prefill, then load requests
+onAuthStateChanged(auth, async (user) => {
   if (user) {
+    // Try Supplier Details in 'suppliers/{uid}' first; fallback to 'info/{uid}'
+    try {
+      let sDoc = await getDoc(doc(db, "suppliers", user.uid));
+      if (!sDoc.exists()) sDoc = await getDoc(doc(db, "info", user.uid));
+
+      if (sDoc.exists()) {
+        const d = sDoc.data();
+        prefill.name = d.companyName || d.contactPerson || d.name || "";
+        prefill.location = d.companyAddress || d.location || "";
+      }
+    } catch (e) {
+      console.warn("Unable to prefill supplier details:", e);
+    }
     loadOpenRequests(user.uid);
   }
 });
