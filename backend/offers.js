@@ -7,7 +7,7 @@ const tableBody = document.querySelector('#offers-table tbody');
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     alert("Please login to view your offers.");
-    window.location.href = "../login.html";
+    window.location.href = "../index.html";
     return;
   }
   loadOffers(user.uid);
@@ -99,6 +99,11 @@ window.UpdateTracking = async (uid, globalOrderId) => {
     "Delivered"
   ];
 
+  // Find index of current status
+  const currentStatusIndex = statusOptions.indexOf(order.status);
+  // Only allow statuses after the current one
+  const availableStatuses = statusOptions.slice(currentStatusIndex + 1);
+
   let html = `
     <div>
       <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
@@ -110,10 +115,10 @@ window.UpdateTracking = async (uid, globalOrderId) => {
       </div>
       <div style="margin-bottom:16px;">
         <label for="status-select">Update Status:</label>
-        <select id="status-select">
-          ${statusOptions.map(s => `<option value="${s}" ${order.status === s ? "selected" : ""}>${s}</option>`).join("")}
+        <select id="status-select" ${availableStatuses.length === 0 ? "disabled" : ""}>
+         ${availableStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
         </select>
-        <button id="update-status-btn">Update</button>
+<button id="update-status-btn" ${availableStatuses.length === 0 ? "disabled" : ""}>Update</button>
       </div>
       <h3>Updates:</h3>
       <table>
@@ -201,8 +206,51 @@ window.UpdateTracking = async (uid, globalOrderId) => {
       }
     }
 
-    alert("Order status updated!");
-    document.getElementById('order-tracking-popup').remove();
-    loadOffers(uid);
+    // Show alert for status update
+    alert(`Order status updated to "${newStatus}"`);
+
+    // --- Update the table below without closing the popup ---
+    // Update the tracking array and status in the popup
+    order.status = newStatus;
+    tracking = newTracking;
+
+    // Re-render the tracking table and status
+    const currentStatusIndex = statusOptions.indexOf(order.status);
+    const availableStatuses = statusOptions.slice(currentStatusIndex + 1);
+
+    document.querySelector('#order-tracking-popup div').innerHTML = `
+      <button class="close-btn" onclick="document.getElementById('order-tracking-popup').remove()">&times;</button>
+      <h2>Order Tracking</h2>
+      <div style="margin-bottom:16px;">
+        <b>Order ID:</b> ${globalOrderId}<br>
+        <b>Item:</b> ${order.itemName}<br>
+        <b>Current Status:</b> ${order.status}
+      </div>
+      <div style="margin-bottom:16px;">
+  <label for="status-select">Update Status:</label>
+  <select id="status-select" ${availableStatuses.length === 0 ? "disabled" : ""}>
+    ${availableStatuses.map(s => `<option value="${s}">${s}</option>`).join("")}
+  </select>
+  <button id="update-status-btn" ${availableStatuses.length === 0 ? "disabled" : ""}>Update</button>
+</div>
+      <h3>Updates:</h3>
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Status</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          ${tracking.map(t => `
+            <tr>
+              <td>${t.date ? (t.date.toDate ? t.date.toDate().toLocaleString() : new Date(t.date).toLocaleString()) : "-"}</td>
+              <td>${t.status}</td>
+              <td>${t.note || ""}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      <button onclick="document.getElementById('order-tracking-popup').remove()">Close</button>
+    `;
+
+    document.getElementById('update-status-btn').onclick = arguments.callee;
   };
 };

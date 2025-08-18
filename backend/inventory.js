@@ -28,7 +28,7 @@ document.querySelector('.close-btn').onclick = function() {
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     alert("Please login to access your inventory.");
-    window.location.href = "../login.html";
+    window.location.href = "../index.html";
     return;
   }
   loadInventory(user.uid);

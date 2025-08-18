@@ -126,3 +126,91 @@
   font-size: 0.98rem;
   padding: 7px 6px;
 }
+
+/* Pill-shaped dropdown and button for tracking popup */
+#order-tracking-popup select,
+#order-tracking-popup button,
+#order-tracking-popup .close-btn {
+  border-radius: 20px;
+  padding: 8px 20px;
+  border: none;
+  font-size: 1rem;
+  background: #e0e7ff;
+  color: #003366;
+  margin-right: 8px;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s;
+}
+
+#order-tracking-popup select:focus,
+#order-tracking-popup button:focus {
+  outline: none;
+  background: #bcd4f6;
+}
+
+#order-tracking-popup button {
+  background: #0a4fa9;
+  color: #fff;
+  cursor: pointer;
+}
+
+#order-tracking-popup button:hover {
+  background: #003366;
+}
+
+/* Improved pill-shaped dropdown for tracking popup */
+#order-tracking-popup select {
+  border-radius: 999px;
+  padding: 10px 32px 10px 20px; /* More right padding for arrow */
+  border: none;
+  font-size: 1rem;
+  background: #fff; /* White background */
+  color: #003366;
+  margin-right: 8px;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+}
+
+/* Custom arrow for select */
+#order-tracking-popup select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 7L9 11L13 7' stroke='%23003366' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px 18px;
+}
+
+/* On focus */
+#order-tracking-popup select:focus {
+  outline: none;
+  background: #f0f4ff;
+}
+
+/* Dropdown options */
+#order-tracking-popup select option {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background: #fff;
+  color: #003366;
+}
+
+/* Update button pill style */
+#order-tracking-popup button {
+  border-radius: 999px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  background: #0a4fa9;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s;
+}
+
+#order-tracking-popup button:hover {
+  background: #003366;
+}
