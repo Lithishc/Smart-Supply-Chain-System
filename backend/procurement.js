@@ -7,7 +7,7 @@ const tableBody = document.querySelector('#procurement-table tbody');
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     alert("Please login to access procurement.");
-    window.location.href = "../login.html";
+    window.location.href = "../index.html";
     return;
   }
   loadInventoryForProcurement(user.uid);
@@ -105,27 +105,81 @@ window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
   const reqSnap = await getDoc(reqRef);
   if (!reqSnap.exists()) return;
   const reqData = reqSnap.data();
+
   // Only show offers that are not rejected
   const offers = (reqData.supplierResponses || []).filter(offer => offer.status !== "rejected");
+
+  // Helpers
+  const fmtPrice = (p) => {
+    const n = Number(p);
+    return isFinite(n) ? n.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }) : (p ?? "N/A");
+  };
+  const fmtDate = (ts) => {
+    try {
+      const d = ts?.toDate ? ts.toDate() : (ts instanceof Date ? ts : null);
+      return d ? d.toLocaleString() : "N/A";
+    } catch {
+      return "N/A";
+    }
+  };
+
   let html = `<h3>Supplier Offers</h3>`;
   if (offers.length === 0) {
     html += "<p>No offers yet.</p>";
   } else {
     offers.forEach((offer, idx) => {
+      const payMethod = offer?.payment?.method || "N/A";
+      const payTerms = offer?.payment?.terms || "N/A";
+      const delMethod = offer?.delivery?.method || "N/A";
+      const delDays = offer?.delivery?.days ?? "N/A";
+      const location = offer?.location || "N/A";
+      const createdAt = fmtDate(offer?.createdAt);
+
       html += `
         <div class="offer-card">
           <div class="offer-header">
-            <span class="offer-label">Supplier Name:</span>
-            <span class="offer-value">${offer.supplierName}</span>
+            <span class="offer-label">Supplier:</span>
+            <span class="offer-value">${offer.supplierName || "Unknown"}</span>
           </div>
+
+          <div class="offer-row">
+            <span class="offer-label">Location:</span>
+            <span class="offer-value">${location}</span>
+          </div>
+
           <div class="offer-row">
             <span class="offer-label">Price:</span>
-            <span class="offer-value">₹${offer.price}</span>
+            <span class="offer-value">${fmtPrice(offer.price)}</span>
           </div>
+
           <div class="offer-row">
             <span class="offer-label">Details:</span>
-            <span class="offer-value">${offer.details}</span>
+            <span class="offer-value">${offer.details || "-"}</span>
           </div>
+
+          <div class="offer-row">
+            <span class="offer-label">Payment Method:</span>
+            <span class="offer-value">${payMethod}</span>
+          </div>
+          <div class="offer-row">
+            <span class="offer-label">Payment Terms:</span>
+            <span class="offer-value">${payTerms}</span>
+          </div>
+
+          <div class="offer-row">
+            <span class="offer-label">Delivery Method:</span>
+            <span class="offer-value">${delMethod}</span>
+          </div>
+          <div class="offer-row">
+            <span class="offer-label">Delivery in (days):</span>
+            <span class="offer-value">${delDays}</span>
+          </div>
+
+          <div class="offer-row">
+            <span class="offer-label">Offered At:</span>
+            <span class="offer-value">${createdAt}</span>
+          </div>
+
           <div class="offer-actions">
             <button class="pill-btn accept" onclick="window.acceptOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Accept</button>
             <button class="pill-btn reject" onclick="window.rejectOffer('${uid}','${globalProcurementId}','${userRequestId}',${idx})">Reject</button>
@@ -134,7 +188,8 @@ window.viewOffers = async (uid, globalProcurementId, userRequestId) => {
       `;
     });
   }
-  // Show in a popup or a div (for demo, use alert or a simple div)
+
+  // Show in a popup
   let popup = document.getElementById('offers-popup');
   if (!popup) {
     popup = document.createElement('div');

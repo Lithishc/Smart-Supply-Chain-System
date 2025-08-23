@@ -1,14 +1,16 @@
-# Ignore everything
+# Ignore everything by default
 *
 
-# But not these files/folders:
+# Track these files at repo root
+!.gitignore
 !LICENSE
 !README*
 !index.html
 !registry.html
-!frontend/
-!backend/
-!.gitignore
 
-# Ignore VS Code settings
+# Track everything under frontend/ and backend/
+!frontend/**
+!backend/**
+
+# Still ignore editor junk
 .vscode/
