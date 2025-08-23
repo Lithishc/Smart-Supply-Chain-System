@@ -7,7 +7,7 @@ const tableBody = document.querySelector('#orders-table tbody');
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     alert("Please login to view orders.");
-    window.location.href = "../login.html";
+    window.location.href = "../index.html";
     return;
   }
   loadOrders(user.uid);

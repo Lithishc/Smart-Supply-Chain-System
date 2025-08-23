@@ -7,7 +7,7 @@ const tableBody = document.querySelector('#procurement-table tbody');
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     alert("Please login to access procurement.");
-    window.location.href = "../login.html";
+    window.location.href = "../index.html";
     return;
   }
   loadInventoryForProcurement(user.uid);
