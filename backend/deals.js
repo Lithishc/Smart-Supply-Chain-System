@@ -3,6 +3,8 @@ import {
   collection, getDocs, doc, updateDoc, arrayUnion, getDoc, query, where, addDoc
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { createNotification } from "./notifications-helper.js";
+import { showToast } from "./toast.js";
 
 const auth = getAuth();
 
@@ -133,9 +135,16 @@ document.getElementById('offer-form').addEventListener('submit', async function 
         { supplierResponses: arrayUnion(offerData) }
       );
     }
-  }
 
-  alert("Offer sent!");
+    const dealerUid = reqData.userUid;
+    await createNotification(dealerUid, {
+      type: "offer_received",
+      title: "New Offer Received",
+      body: `${supplierName} offered ₹${price} for ${reqData.itemName}`,
+      related: { globalProcurementId: currentReqId, offerId: offerData.offerId, itemID: reqData.itemID }
+    });
+  }
+  showToast("Offer sent", "success");
   window.closeOfferPopup();
   loadOpenRequests(supplierUid);
 });

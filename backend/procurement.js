@@ -1,6 +1,8 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { collection, getDocs, doc, updateDoc, addDoc, query, where, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { createNotification } from "./notifications-helper.js";
+import { showToast } from "./toast.js";
 
 const tableBody = document.querySelector('#procurement-table tbody');
 
@@ -292,7 +294,20 @@ window.acceptOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     await updateDoc(supplierOfferRef, { status: "accepted", globalOrderId });
   }
 
-  alert("Offer accepted and global order created!");
+  await createNotification(acceptedOffer.supplierUid, {
+    type: "offer_accepted",
+    title: "Offer Accepted",
+    body: `Your offer for ${reqData.itemName} was accepted.`,
+    related: { globalProcurementId, offerId: acceptedOffer.offerId, globalOrderId, itemID: reqData.itemID }
+  });
+  await createNotification(uid, {
+    type: "order_created",
+    title: "Order Created",
+    body: `${acceptedOffer.supplierName} supplying ${reqData.itemName}.`,
+    related: { globalProcurementId, offerId: acceptedOffer.offerId, globalOrderId, itemID: reqData.itemID }
+  });
+  showToast("Offer accepted & order created", "success");
+
   document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };
@@ -325,7 +340,15 @@ window.rejectOffer = async (uid, globalProcurementId, userRequestId, offerIdx) =
     await updateDoc(supplierOfferRef, { status: "rejected" });
   }
 
-  alert("Offer rejected.");
+  const rejected = offers[offerIdx];
+  await createNotification(rejected.supplierUid, {
+    type: "offer_rejected",
+    title: "Offer Rejected",
+    body: `Offer for ${globalData.itemName} was rejected.`,
+    related: { globalProcurementId, offerId: rejected.offerId, itemID: globalData.itemID }
+  });
+  showToast("Offer rejected", "info");
+
   document.getElementById('offers-popup').remove();
   loadInventoryForProcurement(uid);
 };

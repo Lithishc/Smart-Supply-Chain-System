@@ -1,6 +1,8 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { collection, getDocs, doc, getDoc, updateDoc, query,where,collectionGroup } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { createNotification } from "./notifications-helper.js";
+import { showToast } from "./toast.js";
 
 const tableBody = document.querySelector('#offers-table tbody');
 
@@ -144,6 +146,37 @@ window.UpdateTracking = async (uid, globalOrderId) => {
   popup.innerHTML = html;
   document.body.appendChild(popup);
 
+  // --- Fix: Hide update status section if status is not in allowed options ---
+  const statusSelect = document.getElementById('status-select');
+  const updateBtn = document.getElementById('update-status-btn');
+  const statusLabel = document.querySelector('label[for="status-select"]');
+  if (statusSelect && updateBtn && statusLabel) {
+    const currentStatusIndex = statusOptions.indexOf(order.status);
+    let availableStatuses = [];
+
+    // Hide controls if status is "fulfilled" or "Delivered"
+    if (order.status === "fulfilled" || order.status === "Delivered") {
+      statusLabel.style.display = "none";
+      statusSelect.style.display = "none";
+      updateBtn.style.display = "none";
+      return;
+    }
+
+    if (currentStatusIndex >= 0) {
+      availableStatuses = statusOptions.slice(currentStatusIndex + 1);
+    } else {
+      availableStatuses = statusOptions.length ? [statusOptions[0]] : [];
+    }
+
+    statusSelect.innerHTML = availableStatuses.map(s => `<option value="${s}">${s}</option>`).join("");
+    statusSelect.disabled = availableStatuses.length === 0;
+    updateBtn.disabled = availableStatuses.length === 0;
+
+    statusLabel.style.display = "";
+    statusSelect.style.display = "";
+    updateBtn.style.display = "";
+  }
+
   // Add event listener for status update
   document.getElementById('update-status-btn').onclick = async () => {
     const newStatus = document.getElementById('status-select').value;
@@ -206,8 +239,25 @@ window.UpdateTracking = async (uid, globalOrderId) => {
       }
     }
 
-    // Show alert for status update
-    alert(`Order status updated to "${newStatus}"`);
+    // Identify dealer & supplier from the global order
+    const freshGlobal = (await getDoc(globalOrderRef)).data();
+    if (freshGlobal.dealerUid) {
+      await createNotification(freshGlobal.dealerUid, {
+        type: "order_status",
+        title: `Order Status: ${newStatus}`,
+        body: `${freshGlobal.itemName} is now ${newStatus}`,
+        related: { globalOrderId, globalProcurementId: freshGlobal.globalProcurementId, itemID: freshGlobal.itemID }
+      });
+    }
+    if (freshGlobal.supplierUid) {
+      await createNotification(freshGlobal.supplierUid, {
+        type: "order_status",
+        title: `Order Status: ${newStatus}`,
+        body: `${freshGlobal.itemName} is now ${newStatus}`,
+        related: { globalOrderId, globalProcurementId: freshGlobal.globalProcurementId, itemID: freshGlobal.itemID }
+      });
+    }
+    showToast(`Order status updated to ${newStatus}`, "success");
 
     // --- Update the table below without closing the popup ---
     // Update the tracking array and status in the popup
