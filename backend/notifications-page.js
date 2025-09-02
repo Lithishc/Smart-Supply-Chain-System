@@ -20,11 +20,34 @@ onAuthStateChanged(auth, (user) => {
     snap.docs.forEach(d => {
       const n = d.data();
       const ts = n.createdAt?.toDate ? n.createdAt.toDate().toLocaleString() : "";
+      let idInfo = "";
+      if (n.related) {
+        switch (n.type) {
+          case "procurement_created":
+            if (n.related.globalProcurementId)
+              idInfo = `<div class="notif-id">Procurement ID: ${n.related.globalProcurementId}</div>`;
+            break;
+          case "offer_received":
+          case "offer_accepted":
+          case "offer_rejected":
+            if (n.related.offerId)
+              idInfo = `<div class="notif-id">Offer ID: ${n.related.offerId}</div>`;
+            break;
+          case "order_created":
+          case "order_status":
+            if (n.related.globalOrderId)
+              idInfo = `<div class="notif-id">Order ID: ${n.related.globalOrderId}</div>`;
+            break;
+          default:
+            idInfo = "";
+        }
+      }
       const card = document.createElement("div");
       card.className = "notif-card" + (n.read ? "" : " unread");
       card.innerHTML = `
         <div class="notif-main">
           <div class="notif-title">${n.title || n.type}</div>
+          ${idInfo}
           <div class="notif-body">${n.body || ""}</div>
           <div class="notif-meta">${ts}</div>
         </div>
