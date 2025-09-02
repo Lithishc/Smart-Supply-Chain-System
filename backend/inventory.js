@@ -2,6 +2,8 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { createNotification } from "./notifications-helper.js";
+import { showToast } from "./toast.js";
 
 // DOM Elements
 const popup = document.getElementById('fluid-popup');
@@ -197,7 +199,14 @@ async function loadInventory(uid) {
               { ...requestData, globalProcurementId: globalReqRef.id }
             );
             await updateDoc(userReqRef, { requestId: userReqRef.id });
-            alert("Procurement request created automatically!");
+            
+            await createNotification(auth.currentUser.uid, {
+              type: "procurement_created",
+              title: "Procurement Request Created",
+              body: `${requestData.itemName} • Qty ${requestData.requestedQty}`,
+              related: { globalProcurementId: globalReqRef.id, itemID: requestData.itemID }
+            });
+            showToast("Procurement request created", "success");
           }
         }
       }

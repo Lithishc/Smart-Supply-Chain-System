@@ -6,7 +6,6 @@
   <link rel="stylesheet" href="inventorystyle.css">
 </head>
 <body>
-    <h1>Smart Supply Chain </h1>
     <div id="navbar-placeholder"></div>
 
     <div class="container">
@@ -64,5 +63,9 @@
     import { loadNavbar } from '../backend/navbar.js';
     loadNavbar();
   </script>
+  <!-- Example inside any page after navbar load -->
+  <script type="module" src="../backend/notifications-listener.js"></script>
+  <script type="module" src="../backend/toast.js"></script>
+  <script type="module" src="../backend/offers-badge-listener.js"></script>
 </body>
 </html>
