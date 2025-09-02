@@ -58,13 +58,13 @@ body {
   gap: 8px;
 }
 .mark-btn {
-  background: #1956a3;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 0.7rem;
-  cursor: pointer;
+    background: #1956a3;
+    color: #fff;
+    border: none;
+    border-radius: 99px;
+    padding: 10px 22px;
+    font-size: 1rem;
+    cursor: pointer;
 }
 .mark-btn:hover {
   background: #0e3a7d;
