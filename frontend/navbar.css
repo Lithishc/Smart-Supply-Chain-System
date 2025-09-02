@@ -16,6 +16,14 @@
   animation: fadeInDown 1s cubic-bezier(.39,.575,.565,1) both;
 }
 
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  color: #003366;
+  text-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
 @keyframes fadeInDown {
   0% {
     opacity: 0;
