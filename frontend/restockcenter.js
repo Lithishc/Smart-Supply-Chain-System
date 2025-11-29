@@ -187,13 +187,15 @@ async function annotateAIDemandTags() {
     aiTag.style.fontWeight = 'bold';
     aiTag.style.cursor = 'help';
 
+    // New: include suggested increase percentage range if available
+    const percentText = seasonal?.increaseRange || market?.increaseRange || null;
     if (showSeasonal) {
-      aiTag.textContent = "Increase";
-      aiTag.title = seasonal?.reason || "";
+      aiTag.textContent = percentText ? `Increase ${percentText}` : "Increase";
+      aiTag.title = `${seasonal?.reason || ''}${percentText ? `\nSuggested increase: ${percentText}` : ''}`;
       aiTag.style.color = "#1db954";
     } else {
-      aiTag.textContent = "Trending";
-      aiTag.title = market?.reason || "";
+      aiTag.textContent = percentText ? `Trending ${percentText}` : "Trending";
+      aiTag.title = `${market?.reason || ''}${percentText ? `\nSuggested increase: ${percentText}` : ''}`;
       aiTag.style.color = "#1db954";
     }
 

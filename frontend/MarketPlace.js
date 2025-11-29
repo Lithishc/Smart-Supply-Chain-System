@@ -116,7 +116,8 @@ async function loadOpenRequests(supplierUid) {
       (async () => {
         const seasonal = await getSeasonalDemand(req.itemName);
         if (seasonal?.demand) {
-          const seasonalTagHtml = `<span class="seasonal-tag" title="${seasonal.reason}">${seasonal.recommendation}</span>`;
+          const pct = seasonal?.increaseRange ? ` (${seasonal.increaseRange})` : '';
+          const seasonalTagHtml = `<span class="seasonal-tag" title="${seasonal.reason}${pct ? '\nSuggested increase: ' + seasonal.increaseRange : ''}">${seasonal.recommendation}${pct}</span>`;
           const insertedCard = marketplaceList.querySelector(`.deal-card[data-req-id="${docSnap.id}"]`);
           if (insertedCard) {
             const placeholder = insertedCard.querySelector('.seasonal-placeholder');
@@ -129,7 +130,8 @@ async function loadOpenRequests(supplierUid) {
       (async () => {
         const market = await getMarketDemand(req.itemName);
         if (market?.demand) {
-          const recommendTagHtml = `<span class="rec-tag" title="${market.reason}">Recommended</span>`;
+          const pct = market?.increaseRange ? ` (${market.increaseRange})` : '';
+          const recommendTagHtml = `<span class="rec-tag" title="${market.reason}${pct ? '\nSuggested increase: ' + market.increaseRange : ''}">Recommended${pct}</span>`;
           const insertedCard = marketplaceList.querySelector(`.deal-card[data-req-id="${docSnap.id}"]`);
           if (insertedCard) {
             const placeholder = insertedCard.querySelector('.recommend-placeholder');
