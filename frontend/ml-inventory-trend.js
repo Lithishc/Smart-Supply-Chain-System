@@ -67,9 +67,20 @@ export async function getInventoryTrendPrediction(uid, itemID) {
     { name: "6 Weeks", days: 42 }
   ];
 
+  // helper: map slope magnitude to a sensible percent range (heuristic)
+  function slopeToPercentRange(slope) {
+    const m = Math.abs(slope);
+    if (m > 0.5) return "30-50%";
+    if (m > 0.2) return "15-30%";
+    if (m > 0.1) return "10-20%";
+    if (m > 0.05) return "5-10%";
+    if (m > 0.01) return "1-5%";
+    return null;
+  }
+
   return windows.map(win => {
     let seg = segmentHistory(history, win.days);
-    if (seg.length < 2) return { window: win.name, trend: "→", slope: 0, reason: "Not enough data." };
+    if (seg.length < 2) return { window: win.name, trend: "→", slope: 0, reason: "Not enough data.", percentRange: null };
     seg = normalize(seg);
     const smooth = movingAverage(seg);
     const slope = linearRegressionSlope(seg.map((d, i) => ({ quantity: smooth[i] })));
@@ -79,6 +90,10 @@ export async function getInventoryTrendPrediction(uid, itemID) {
       : trend === "↓"
         ? `Usage decreasing in last ${win.name.toLowerCase()}.`
         : `Usage stable in last ${win.name.toLowerCase()}.`;
-    return { window: win.name, trend, slope: Number(slope.toFixed(2)), reason };
+
+    // add percentRange only when trend is up or down
+    const percentRange = trend === "→" ? null : slopeToPercentRange(slope);
+
+    return { window: win.name, trend, slope: Number(slope.toFixed(2)), reason, percentRange };
   });
 }

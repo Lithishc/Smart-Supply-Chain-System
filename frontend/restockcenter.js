@@ -150,6 +150,37 @@ async function loadInventoryForProcurement(uid) {
 }
 
 // --- AI Demand Tag beside Request Qty ---
+function extractPercentAndDirection(text) {
+  if (!text) return { percent: null, dir: null };
+  const t = String(text);
+  // range like "10-25%" or "10 % to 25 %"
+  const reRange = /(-?\d{1,3})\s*(?:%|\spercent)?\s*(?:[\-to]{1,3})\s*(-?\d{1,3})\s*%?/i;
+  const reSingle = /(?:increase|up|rise|boost|grow|decrease|drop|fall|lower|reduce).{0,20}?(-?\d{1,3})\s*%/i;
+
+  const m = t.match(reRange);
+  if (m) {
+    const a = Number(m[1]), b = Number(m[2]);
+    const min = Math.min(a, b), max = Math.max(a, b);
+    const dir = /\b(decrease|drop|fall|lower|reduce|decline)\b/i.test(t) ? "decrease" : "increase";
+    return { percent: `${Math.abs(min)}-${Math.abs(max)}%`, dir };
+  }
+
+  const m2 = t.match(reSingle);
+  if (m2) {
+    const v = Math.abs(Number(m2[1]));
+    const dir = /\b(decrease|drop|fall|lower|reduce|decline)\b/i.test(t) ? "decrease" : "increase";
+    if (!isNaN(v)) return { percent: `${Math.max(1, v - 5)}-${v + 5}%`, dir };
+  }
+
+  const lower = t.toLowerCase();
+  if (/\b(decrease|drop|fall|lower|reduce|decline|down)\b/.test(lower)) return { percent: "5-20%", dir: "decrease" };
+  if (/\b(high|strong|significant|substantial)\b/.test(lower)) return { percent: "20-50%", dir: "increase" };
+  if (/\b(moderate|moderately|steady)\b/.test(lower)) return { percent: "10-20%", dir: "increase" };
+  if (/\b(slight|small|minor|mild)\b/.test(lower)) return { percent: "5-10%", dir: "increase" };
+
+  return { percent: null, dir: null };
+}
+
 async function annotateAIDemandTags() {
   const tableBody = document.querySelector('#procurement-table tbody');
   if (!tableBody) return;
@@ -164,7 +195,7 @@ async function annotateAIDemandTags() {
     const requestQtyCell = row.cells[5];
     if (!requestQtyCell) return;
 
-    Array.from(requestQtyCell.querySelectorAll('.tag, .ai-demand-tag')).forEach(tag => tag.remove());
+    Array.from(requestQtyCell.querySelectorAll('.tag, .ai-demand-tag, .ml-demand-tag')).forEach(tag => tag.remove());
 
     // Fetch seasonal + market in parallel
     let seasonal, market;
@@ -175,31 +206,96 @@ async function annotateAIDemandTags() {
       ]);
     } catch {}
 
-    const showSeasonal = seasonal?.demand === true;
-    const showMarket = market?.demand === true;
+    // derive percent + direction from reason if server didn't return explicit increaseRange
+    const seasonInfo = seasonal ? extractPercentAndDirection(seasonal.reason || "") : { percent: null, dir: null };
+    const marketInfo = market ? extractPercentAndDirection(market.reason || "") : { percent: null, dir: null };
 
-    // Only render when in demand/trending
-    if (!showSeasonal && !showMarket) return;
+    const isSeasonalHigh = seasonal?.demand === true;
+    const isMarketHigh = market?.demand === true;
+    const isSeasonalLow = (seasonal && seasonal.demand === false);
+    const isMarketLow = (market && market.demand === false);
 
+    // Only render when in demand/trending OR explicitly low (show decrease)
+    if (!isSeasonalHigh && !isMarketHigh && !isSeasonalLow && !isMarketLow) {
+      // still attempt ML tag optionally below
+    }
+
+    // existing AI tag logic (unchanged)...
     const aiTag = document.createElement('span');
     aiTag.className = 'ai-demand-tag';
     aiTag.style.marginLeft = '8px';
     aiTag.style.fontWeight = 'bold';
     aiTag.style.cursor = 'help';
 
-    // New: include suggested increase percentage range if available
-    const percentText = seasonal?.increaseRange || market?.increaseRange || null;
-    if (showSeasonal) {
-      aiTag.textContent = percentText ? `Increase ${percentText}` : "Increase";
-      aiTag.title = `${seasonal?.reason || ''}${percentText ? `\nSuggested increase: ${percentText}` : ''}`;
-      aiTag.style.color = "#1db954";
-    } else {
-      aiTag.textContent = percentText ? `Trending ${percentText}` : "Trending";
-      aiTag.title = `${market?.reason || ''}${percentText ? `\nSuggested increase: ${percentText}` : ''}`;
-      aiTag.style.color = "#1db954";
+    // Decide direction and percent text
+    let percentText = null;
+    let direction = null;
+    let reasonText = "";
+
+    if (isSeasonalHigh) {
+      direction = "increase";
+      percentText = seasonal?.increaseRange || seasonInfo.percent;
+      reasonText = seasonal?.reason || "";
+    } else if (isSeasonalLow) {
+      direction = seasonInfo.dir === "increase" ? "increase" : "decrease";
+      percentText = seasonal?.increaseRange || seasonInfo.percent;
+      reasonText = seasonal?.reason || "";
+    } else if (isMarketHigh) {
+      direction = "increase";
+      percentText = market?.increaseRange || marketInfo.percent;
+      reasonText = market?.reason || "";
+    } else if (isMarketLow) {
+      direction = marketInfo.dir === "increase" ? "increase" : "decrease";
+      percentText = market?.increaseRange || marketInfo.percent;
+      reasonText = market?.reason || "";
     }
 
-    requestQtyCell.appendChild(aiTag);
+    if (direction === "increase") {
+      aiTag.textContent = percentText ? `Increase ${percentText}` : "Increase";
+      aiTag.title = `${reasonText}${percentText ? `\nSuggested increase: ${percentText}` : ""}`;
+      aiTag.style.color = "#1db954";
+      requestQtyCell.appendChild(aiTag);
+    } else if (direction === "decrease") {
+      aiTag.textContent = percentText ? `Decrease ${percentText}` : "Decrease";
+      aiTag.title = `${reasonText}${percentText ? `\nSuggested decrease: ${percentText}` : ""}`;
+      aiTag.style.color = "#d9534f";
+      requestQtyCell.appendChild(aiTag);
+    }
+
+    // --- OPTIONAL ML tag: only if ML returns usable prediction ---
+    try {
+      const uid = auth?.currentUser?.uid;
+      const itemId = String(row.cells[0]?.textContent || "").trim();
+      if (uid && itemId) {
+        const ml = await getInventoryTrendPrediction(uid, itemId);
+        if (Array.isArray(ml) && ml.length) {
+          // prefer Monthly window if it indicates trend, else pick first non-stable window
+          const pick = ml.find(w => w.window === "Monthly" && w.trend !== "→") || ml.find(w => w.trend !== "→") || null;
+          if (pick) {
+            const mlTag = document.createElement('span');
+            mlTag.className = 'ml-demand-tag';
+            mlTag.style.marginLeft = '8px';
+            mlTag.style.fontWeight = '600';
+            mlTag.style.cursor = 'help';
+            const pct = pick.percentRange || null;
+            if (pick.trend === "↑") {
+              mlTag.textContent = pct ? `ML ↑ ${pct}` : `ML ↑`;
+              mlTag.title = `${pick.reason}${pct ? `\nEstimated change: ${pct}` : ""}`;
+              mlTag.style.color = "#0b7a53";
+            } else if (pick.trend === "↓") {
+              mlTag.textContent = pct ? `ML ↓ ${pct}` : `ML ↓`;
+              mlTag.title = `${pick.reason}${pct ? `\nEstimated change: ${pct}` : ""}`;
+              mlTag.style.color = "#b33a3a";
+            }
+            // append ML tag after AI tag (or alone)
+            requestQtyCell.appendChild(mlTag);
+          }
+        }
+      }
+    } catch (e) {
+      // ML failed — silent fallback, keep UI working
+      console.debug("ML trend unavailable:", e?.message || e);
+    }
   }));
 }
 
