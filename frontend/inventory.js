@@ -54,6 +54,8 @@ onAuthStateChanged(auth, async (user) => {
     if (editingId) {
       // Update existing item
       await updateDoc(doc(db, "users", user.uid, "inventory", editingId), item);
+      // Record history for updated quantity (capture change made in popup)
+      await recordInventoryHistory(user.uid, item.itemID, Number(item.quantity));
       editingId = null;
       form.querySelector('button[type="submit"]').textContent = "Add Item";
     } else {
@@ -182,6 +184,11 @@ async function loadInventory(uid) {
       if (field === "quantity") value = Number(value);
 
       await updateDoc(doc(db, "users", auth.currentUser.uid, "inventory", id), { [field]: value });
+
+      // Record inventory history on quantity change
+      if (field === "quantity") {
+        await recordInventoryHistory(auth.currentUser.uid, item.itemID, Number(value));
+      }
 
       // --- AUTOMATION: Instantly create procurement request if needed ---
       if (field === "quantity") {
