@@ -135,7 +135,8 @@ async function loadInventory(uid) {
           const item = itemSnap.data();
           await deleteDoc(itemRef);
           loadInventory(auth.currentUser.uid);
-          await recordInventoryHistory(user.uid, item.itemID, 0);
+          // FIX: use auth.currentUser.uid (was 'user') and ensure item.itemID exists
+          if (item?.itemID) await recordInventoryHistory(auth.currentUser.uid, item.itemID, 0);
         }
       }
     });
@@ -185,9 +186,13 @@ async function loadInventory(uid) {
 
       await updateDoc(doc(db, "users", auth.currentUser.uid, "inventory", id), { [field]: value });
 
-      // Record inventory history on quantity change
+      // Record inventory history on quantity change (fetch doc to get itemID)
       if (field === "quantity") {
-        await recordInventoryHistory(auth.currentUser.uid, item.itemID, Number(value));
+        const updatedRef = doc(db, "users", auth.currentUser.uid, "inventory", id);
+        const updatedSnap = await getDoc(updatedRef);
+        const updatedItem = updatedSnap.exists() ? updatedSnap.data() : null;
+        const itemID = updatedItem?.itemID || null;
+        if (itemID) await recordInventoryHistory(auth.currentUser.uid, itemID, Number(value));
       }
 
       // --- AUTOMATION: Instantly create procurement request if needed ---
